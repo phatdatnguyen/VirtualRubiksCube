@@ -1,16 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-namespace VirtualRubiksCube
+﻿namespace VirtualRubiksCube
 {
     partial class AboutBox : Form
     {
+        #region Constructor
         public AboutBox()
         {
             InitializeComponent();
@@ -21,5 +13,6 @@ namespace VirtualRubiksCube
             labelCompanyName.Text = "Dat Nguyen";
             textBoxDescription.Text = "Virtual Rubik's Cube";
         }
+        #endregion
     }
 }

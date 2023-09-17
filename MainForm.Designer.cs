@@ -28,630 +28,663 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.moveQueueListBox = new System.Windows.Forms.ListBox();
-            this.zPrimeButton = new System.Windows.Forms.Button();
-            this.zButton = new System.Windows.Forms.Button();
-            this.xPrimeButton = new System.Windows.Forms.Button();
-            this.xButton = new System.Windows.Forms.Button();
-            this.yPrimeButton = new System.Windows.Forms.Button();
-            this.yButton = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
-            this.setQueueToSolutionButton = new System.Windows.Forms.Button();
-            this.clearQueueButton = new System.Windows.Forms.Button();
-            this.executeQueueButton = new System.Windows.Forms.Button();
-            this.bPrimeButton = new System.Windows.Forms.Button();
-            this.bButton = new System.Windows.Forms.Button();
-            this.fPrimeButton = new System.Windows.Forms.Button();
-            this.fButton = new System.Windows.Forms.Button();
-            this.lPrimeButton = new System.Windows.Forms.Button();
-            this.lButton = new System.Windows.Forms.Button();
-            this.rPrimeButton = new System.Windows.Forms.Button();
-            this.rButton = new System.Windows.Forms.Button();
-            this.dPrimeButton = new System.Windows.Forms.Button();
-            this.dButton = new System.Windows.Forms.Button();
-            this.uPrimeButton = new System.Windows.Forms.Button();
-            this.uButton = new System.Windows.Forms.Button();
-            this.addToQueueRadioButton = new System.Windows.Forms.RadioButton();
-            this.rotateRadioButton = new System.Windows.Forms.RadioButton();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.faceLabel = new System.Windows.Forms.Label();
-            this.zoomLabel = new System.Windows.Forms.Label();
-            this.rotationLabel = new System.Windows.Forms.Label();
-            this.statusLabel = new System.Windows.Forms.Label();
-            this.showViewButton = new System.Windows.Forms.Button();
-            this.viewGroupBox = new System.Windows.Forms.GroupBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.viewComboBox = new System.Windows.Forms.ComboBox();
-            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.resetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.scrambleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.solveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
-            this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
-            this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuStrip = new System.Windows.Forms.MenuStrip();
-            this.groupBox1.SuspendLayout();
-            this.panel1.SuspendLayout();
-            this.viewGroupBox.SuspendLayout();
-            this.menuStrip.SuspendLayout();
-            this.SuspendLayout();
+            components = new System.ComponentModel.Container();
+            groupBox1 = new GroupBox();
+            moveQueueListBox = new ListBox();
+            zPrimeButton = new Button();
+            zButton = new Button();
+            xPrimeButton = new Button();
+            xButton = new Button();
+            yPrimeButton = new Button();
+            yButton = new Button();
+            label1 = new Label();
+            setQueueToSolutionButton = new Button();
+            clearQueueButton = new Button();
+            executeQueueButton = new Button();
+            bPrimeButton = new Button();
+            bButton = new Button();
+            fPrimeButton = new Button();
+            fButton = new Button();
+            lPrimeButton = new Button();
+            lButton = new Button();
+            rPrimeButton = new Button();
+            rButton = new Button();
+            dPrimeButton = new Button();
+            dButton = new Button();
+            uPrimeButton = new Button();
+            uButton = new Button();
+            addToQueueRadioButton = new RadioButton();
+            rotateRadioButton = new RadioButton();
+            statusPanel = new Panel();
+            faceLabel = new Label();
+            zoomLabel = new Label();
+            rotationLabel = new Label();
+            statusLabel = new Label();
+            showViewButton = new Button();
+            viewGroupBox = new GroupBox();
+            label2 = new Label();
+            viewComboBox = new ComboBox();
+            toolTip = new ToolTip(components);
+            fileToolStripMenuItem = new ToolStripMenuItem();
+            resetToolStripMenuItem = new ToolStripMenuItem();
+            scrambleToolStripMenuItem = new ToolStripMenuItem();
+            solveToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem1 = new ToolStripSeparator();
+            settingsToolStripMenuItem = new ToolStripMenuItem();
+            toolStripMenuItem2 = new ToolStripSeparator();
+            exitToolStripMenuItem = new ToolStripMenuItem();
+            helpToolStripMenuItem = new ToolStripMenuItem();
+            aboutToolStripMenuItem = new ToolStripMenuItem();
+            menuStrip = new MenuStrip();
+            renderPanel = new Panel();
+            groupBox1.SuspendLayout();
+            statusPanel.SuspendLayout();
+            viewGroupBox.SuspendLayout();
+            menuStrip.SuspendLayout();
+            SuspendLayout();
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.moveQueueListBox);
-            this.groupBox1.Controls.Add(this.zPrimeButton);
-            this.groupBox1.Controls.Add(this.zButton);
-            this.groupBox1.Controls.Add(this.xPrimeButton);
-            this.groupBox1.Controls.Add(this.xButton);
-            this.groupBox1.Controls.Add(this.yPrimeButton);
-            this.groupBox1.Controls.Add(this.yButton);
-            this.groupBox1.Controls.Add(this.label1);
-            this.groupBox1.Controls.Add(this.setQueueToSolutionButton);
-            this.groupBox1.Controls.Add(this.clearQueueButton);
-            this.groupBox1.Controls.Add(this.executeQueueButton);
-            this.groupBox1.Controls.Add(this.bPrimeButton);
-            this.groupBox1.Controls.Add(this.bButton);
-            this.groupBox1.Controls.Add(this.fPrimeButton);
-            this.groupBox1.Controls.Add(this.fButton);
-            this.groupBox1.Controls.Add(this.lPrimeButton);
-            this.groupBox1.Controls.Add(this.lButton);
-            this.groupBox1.Controls.Add(this.rPrimeButton);
-            this.groupBox1.Controls.Add(this.rButton);
-            this.groupBox1.Controls.Add(this.dPrimeButton);
-            this.groupBox1.Controls.Add(this.dButton);
-            this.groupBox1.Controls.Add(this.uPrimeButton);
-            this.groupBox1.Controls.Add(this.uButton);
-            this.groupBox1.Controls.Add(this.addToQueueRadioButton);
-            this.groupBox1.Controls.Add(this.rotateRadioButton);
-            this.groupBox1.Location = new System.Drawing.Point(618, 85);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(354, 482);
-            this.groupBox1.TabIndex = 2;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Moves";
+            groupBox1.Controls.Add(moveQueueListBox);
+            groupBox1.Controls.Add(zPrimeButton);
+            groupBox1.Controls.Add(zButton);
+            groupBox1.Controls.Add(xPrimeButton);
+            groupBox1.Controls.Add(xButton);
+            groupBox1.Controls.Add(yPrimeButton);
+            groupBox1.Controls.Add(yButton);
+            groupBox1.Controls.Add(label1);
+            groupBox1.Controls.Add(setQueueToSolutionButton);
+            groupBox1.Controls.Add(clearQueueButton);
+            groupBox1.Controls.Add(executeQueueButton);
+            groupBox1.Controls.Add(bPrimeButton);
+            groupBox1.Controls.Add(bButton);
+            groupBox1.Controls.Add(fPrimeButton);
+            groupBox1.Controls.Add(fButton);
+            groupBox1.Controls.Add(lPrimeButton);
+            groupBox1.Controls.Add(lButton);
+            groupBox1.Controls.Add(rPrimeButton);
+            groupBox1.Controls.Add(rButton);
+            groupBox1.Controls.Add(dPrimeButton);
+            groupBox1.Controls.Add(dButton);
+            groupBox1.Controls.Add(uPrimeButton);
+            groupBox1.Controls.Add(uButton);
+            groupBox1.Controls.Add(addToQueueRadioButton);
+            groupBox1.Controls.Add(rotateRadioButton);
+            groupBox1.Location = new Point(721, 98);
+            groupBox1.Margin = new Padding(4, 3, 4, 3);
+            groupBox1.Name = "groupBox1";
+            groupBox1.Padding = new Padding(4, 3, 4, 3);
+            groupBox1.Size = new Size(413, 556);
+            groupBox1.TabIndex = 2;
+            groupBox1.TabStop = false;
+            groupBox1.Text = "Moves";
             // 
             // moveQueueListBox
             // 
-            this.moveQueueListBox.FormattingEnabled = true;
-            this.moveQueueListBox.Location = new System.Drawing.Point(81, 311);
-            this.moveQueueListBox.Name = "moveQueueListBox";
-            this.moveQueueListBox.Size = new System.Drawing.Size(267, 134);
-            this.moveQueueListBox.TabIndex = 20;
+            moveQueueListBox.FormattingEnabled = true;
+            moveQueueListBox.ItemHeight = 15;
+            moveQueueListBox.Location = new Point(94, 359);
+            moveQueueListBox.Margin = new Padding(4, 3, 4, 3);
+            moveQueueListBox.Name = "moveQueueListBox";
+            moveQueueListBox.Size = new Size(311, 154);
+            moveQueueListBox.TabIndex = 20;
             // 
             // zPrimeButton
             // 
-            this.zPrimeButton.Location = new System.Drawing.Point(177, 250);
-            this.zPrimeButton.Name = "zPrimeButton";
-            this.zPrimeButton.Size = new System.Drawing.Size(171, 23);
-            this.zPrimeButton.TabIndex = 17;
-            this.zPrimeButton.Text = "Middle Z - Counterclockwise (Z\')";
-            this.toolTip.SetToolTip(this.zPrimeButton, "[Shift + Z]");
-            this.zPrimeButton.UseVisualStyleBackColor = true;
-            this.zPrimeButton.Click += new System.EventHandler(this.zPrimeButton_Click);
+            zPrimeButton.Location = new Point(206, 288);
+            zPrimeButton.Margin = new Padding(4, 3, 4, 3);
+            zPrimeButton.Name = "zPrimeButton";
+            zPrimeButton.Size = new Size(200, 27);
+            zPrimeButton.TabIndex = 17;
+            zPrimeButton.Text = "Middle Z - Counterclockwise (Z')";
+            toolTip.SetToolTip(zPrimeButton, "[Shift + Z]");
+            zPrimeButton.UseVisualStyleBackColor = true;
+            zPrimeButton.Click += zPrimeButton_Click;
             // 
             // zButton
             // 
-            this.zButton.Location = new System.Drawing.Point(11, 250);
-            this.zButton.Name = "zButton";
-            this.zButton.Size = new System.Drawing.Size(160, 23);
-            this.zButton.TabIndex = 16;
-            this.zButton.Text = "Middle Z - Clockwise (Z)";
-            this.toolTip.SetToolTip(this.zButton, "[Z]");
-            this.zButton.UseVisualStyleBackColor = true;
-            this.zButton.Click += new System.EventHandler(this.zButton_Click);
+            zButton.Location = new Point(13, 288);
+            zButton.Margin = new Padding(4, 3, 4, 3);
+            zButton.Name = "zButton";
+            zButton.Size = new Size(187, 27);
+            zButton.TabIndex = 16;
+            zButton.Text = "Middle Z - Clockwise (Z)";
+            toolTip.SetToolTip(zButton, "[Z]");
+            zButton.UseVisualStyleBackColor = true;
+            zButton.Click += zButton_Click;
             // 
             // xPrimeButton
             // 
-            this.xPrimeButton.Location = new System.Drawing.Point(177, 163);
-            this.xPrimeButton.Name = "xPrimeButton";
-            this.xPrimeButton.Size = new System.Drawing.Size(171, 23);
-            this.xPrimeButton.TabIndex = 11;
-            this.xPrimeButton.Text = "Middle  - Counterclockwise (X\')";
-            this.toolTip.SetToolTip(this.xPrimeButton, "[Shift + Y]");
-            this.xPrimeButton.UseVisualStyleBackColor = true;
-            this.xPrimeButton.Click += new System.EventHandler(this.xPrimeButton_Click);
+            xPrimeButton.Location = new Point(206, 188);
+            xPrimeButton.Margin = new Padding(4, 3, 4, 3);
+            xPrimeButton.Name = "xPrimeButton";
+            xPrimeButton.Size = new Size(200, 27);
+            xPrimeButton.TabIndex = 11;
+            xPrimeButton.Text = "Middle  - Counterclockwise (X')";
+            toolTip.SetToolTip(xPrimeButton, "[Shift + Y]");
+            xPrimeButton.UseVisualStyleBackColor = true;
+            xPrimeButton.Click += xPrimeButton_Click;
             // 
             // xButton
             // 
-            this.xButton.Location = new System.Drawing.Point(11, 163);
-            this.xButton.Name = "xButton";
-            this.xButton.Size = new System.Drawing.Size(160, 23);
-            this.xButton.TabIndex = 10;
-            this.xButton.Text = "Middle X - Clockwise (X)";
-            this.toolTip.SetToolTip(this.xButton, "[X]");
-            this.xButton.UseVisualStyleBackColor = true;
-            this.xButton.Click += new System.EventHandler(this.xButton_Click);
+            xButton.Location = new Point(13, 188);
+            xButton.Margin = new Padding(4, 3, 4, 3);
+            xButton.Name = "xButton";
+            xButton.Size = new Size(187, 27);
+            xButton.TabIndex = 10;
+            xButton.Text = "Middle X - Clockwise (X)";
+            toolTip.SetToolTip(xButton, "[X]");
+            xButton.UseVisualStyleBackColor = true;
+            xButton.Click += xButton_Click;
             // 
             // yPrimeButton
             // 
-            this.yPrimeButton.Location = new System.Drawing.Point(177, 76);
-            this.yPrimeButton.Name = "yPrimeButton";
-            this.yPrimeButton.Size = new System.Drawing.Size(171, 23);
-            this.yPrimeButton.TabIndex = 5;
-            this.yPrimeButton.Text = "Middle Y - Counterclockwise (Y\')";
-            this.toolTip.SetToolTip(this.yPrimeButton, "[Shift + Y]");
-            this.yPrimeButton.UseVisualStyleBackColor = true;
-            this.yPrimeButton.Click += new System.EventHandler(this.yPrimeButton_Click);
+            yPrimeButton.Location = new Point(206, 88);
+            yPrimeButton.Margin = new Padding(4, 3, 4, 3);
+            yPrimeButton.Name = "yPrimeButton";
+            yPrimeButton.Size = new Size(200, 27);
+            yPrimeButton.TabIndex = 5;
+            yPrimeButton.Text = "Middle Y - Counterclockwise (Y')";
+            toolTip.SetToolTip(yPrimeButton, "[Shift + Y]");
+            yPrimeButton.UseVisualStyleBackColor = true;
+            yPrimeButton.Click += yPrimeButton_Click;
             // 
             // yButton
             // 
-            this.yButton.Location = new System.Drawing.Point(11, 76);
-            this.yButton.Name = "yButton";
-            this.yButton.Size = new System.Drawing.Size(160, 23);
-            this.yButton.TabIndex = 4;
-            this.yButton.Text = "Middle Y - Clockwise (Y)";
-            this.toolTip.SetToolTip(this.yButton, "[Y]");
-            this.yButton.UseVisualStyleBackColor = true;
-            this.yButton.Click += new System.EventHandler(this.yButton_Click);
+            yButton.Location = new Point(13, 88);
+            yButton.Margin = new Padding(4, 3, 4, 3);
+            yButton.Name = "yButton";
+            yButton.Size = new Size(187, 27);
+            yButton.TabIndex = 4;
+            yButton.Text = "Middle Y - Clockwise (Y)";
+            toolTip.SetToolTip(yButton, "[Y]");
+            yButton.UseVisualStyleBackColor = true;
+            yButton.Click += yButton_Click;
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(8, 311);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(67, 13);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "Move queue";
+            label1.AutoSize = true;
+            label1.Location = new Point(9, 359);
+            label1.Margin = new Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new Size(73, 15);
+            label1.TabIndex = 0;
+            label1.Text = "Move queue";
             // 
             // setQueueToSolutionButton
             // 
-            this.setQueueToSolutionButton.Location = new System.Drawing.Point(218, 448);
-            this.setQueueToSolutionButton.Name = "setQueueToSolutionButton";
-            this.setQueueToSolutionButton.Size = new System.Drawing.Size(130, 23);
-            this.setQueueToSolutionButton.TabIndex = 23;
-            this.setQueueToSolutionButton.Text = "Set queue to solution";
-            this.setQueueToSolutionButton.UseVisualStyleBackColor = true;
-            this.setQueueToSolutionButton.Click += new System.EventHandler(this.setQueueToSolutionButton_Click);
+            setQueueToSolutionButton.Location = new Point(254, 517);
+            setQueueToSolutionButton.Margin = new Padding(4, 3, 4, 3);
+            setQueueToSolutionButton.Name = "setQueueToSolutionButton";
+            setQueueToSolutionButton.Size = new Size(152, 27);
+            setQueueToSolutionButton.TabIndex = 23;
+            setQueueToSolutionButton.Text = "Set queue to solution";
+            setQueueToSolutionButton.UseVisualStyleBackColor = true;
+            setQueueToSolutionButton.Click += setQueueToSolutionButton_Click;
             // 
             // clearQueueButton
             // 
-            this.clearQueueButton.Location = new System.Drawing.Point(112, 448);
-            this.clearQueueButton.Name = "clearQueueButton";
-            this.clearQueueButton.Size = new System.Drawing.Size(100, 23);
-            this.clearQueueButton.TabIndex = 22;
-            this.clearQueueButton.Text = "Clear queue";
-            this.clearQueueButton.UseVisualStyleBackColor = true;
-            this.clearQueueButton.Click += new System.EventHandler(this.clearQueueButton_Click);
+            clearQueueButton.Location = new Point(131, 517);
+            clearQueueButton.Margin = new Padding(4, 3, 4, 3);
+            clearQueueButton.Name = "clearQueueButton";
+            clearQueueButton.Size = new Size(117, 27);
+            clearQueueButton.TabIndex = 22;
+            clearQueueButton.Text = "Clear queue";
+            clearQueueButton.UseVisualStyleBackColor = true;
+            clearQueueButton.Click += clearQueueButton_Click;
             // 
             // executeQueueButton
             // 
-            this.executeQueueButton.Location = new System.Drawing.Point(6, 448);
-            this.executeQueueButton.Name = "executeQueueButton";
-            this.executeQueueButton.Size = new System.Drawing.Size(100, 23);
-            this.executeQueueButton.TabIndex = 21;
-            this.executeQueueButton.Text = "Execute queue";
-            this.executeQueueButton.UseVisualStyleBackColor = true;
-            this.executeQueueButton.Click += new System.EventHandler(this.executeQueueButton_Click);
+            executeQueueButton.Location = new Point(7, 517);
+            executeQueueButton.Margin = new Padding(4, 3, 4, 3);
+            executeQueueButton.Name = "executeQueueButton";
+            executeQueueButton.Size = new Size(117, 27);
+            executeQueueButton.TabIndex = 21;
+            executeQueueButton.Text = "Execute queue";
+            executeQueueButton.UseVisualStyleBackColor = true;
+            executeQueueButton.Click += executeQueueButton_Click;
             // 
             // bPrimeButton
             // 
-            this.bPrimeButton.Location = new System.Drawing.Point(177, 279);
-            this.bPrimeButton.Name = "bPrimeButton";
-            this.bPrimeButton.Size = new System.Drawing.Size(171, 23);
-            this.bPrimeButton.TabIndex = 19;
-            this.bPrimeButton.Text = "Back - Counterclockwise (B\')";
-            this.toolTip.SetToolTip(this.bPrimeButton, "[Shift + B]");
-            this.bPrimeButton.UseVisualStyleBackColor = true;
-            this.bPrimeButton.Click += new System.EventHandler(this.bPrimeButton_Click);
+            bPrimeButton.Location = new Point(206, 322);
+            bPrimeButton.Margin = new Padding(4, 3, 4, 3);
+            bPrimeButton.Name = "bPrimeButton";
+            bPrimeButton.Size = new Size(200, 27);
+            bPrimeButton.TabIndex = 19;
+            bPrimeButton.Text = "Back - Counterclockwise (B')";
+            toolTip.SetToolTip(bPrimeButton, "[Shift + B]");
+            bPrimeButton.UseVisualStyleBackColor = true;
+            bPrimeButton.Click += bPrimeButton_Click;
             // 
             // bButton
             // 
-            this.bButton.Location = new System.Drawing.Point(11, 279);
-            this.bButton.Name = "bButton";
-            this.bButton.Size = new System.Drawing.Size(160, 23);
-            this.bButton.TabIndex = 18;
-            this.bButton.Text = "Back - Clockwise (B)";
-            this.toolTip.SetToolTip(this.bButton, "[B]");
-            this.bButton.UseVisualStyleBackColor = true;
-            this.bButton.Click += new System.EventHandler(this.bButton_Click);
+            bButton.Location = new Point(13, 322);
+            bButton.Margin = new Padding(4, 3, 4, 3);
+            bButton.Name = "bButton";
+            bButton.Size = new Size(187, 27);
+            bButton.TabIndex = 18;
+            bButton.Text = "Back - Clockwise (B)";
+            toolTip.SetToolTip(bButton, "[B]");
+            bButton.UseVisualStyleBackColor = true;
+            bButton.Click += bButton_Click;
             // 
             // fPrimeButton
             // 
-            this.fPrimeButton.Location = new System.Drawing.Point(177, 221);
-            this.fPrimeButton.Name = "fPrimeButton";
-            this.fPrimeButton.Size = new System.Drawing.Size(171, 23);
-            this.fPrimeButton.TabIndex = 15;
-            this.fPrimeButton.Text = "Front - Counterclockwise (F\')";
-            this.toolTip.SetToolTip(this.fPrimeButton, "[Shift + F]");
-            this.fPrimeButton.UseVisualStyleBackColor = true;
-            this.fPrimeButton.Click += new System.EventHandler(this.fPrimeButton_Click);
+            fPrimeButton.Location = new Point(206, 255);
+            fPrimeButton.Margin = new Padding(4, 3, 4, 3);
+            fPrimeButton.Name = "fPrimeButton";
+            fPrimeButton.Size = new Size(200, 27);
+            fPrimeButton.TabIndex = 15;
+            fPrimeButton.Text = "Front - Counterclockwise (F')";
+            toolTip.SetToolTip(fPrimeButton, "[Shift + F]");
+            fPrimeButton.UseVisualStyleBackColor = true;
+            fPrimeButton.Click += fPrimeButton_Click;
             // 
             // fButton
             // 
-            this.fButton.Location = new System.Drawing.Point(11, 221);
-            this.fButton.Name = "fButton";
-            this.fButton.Size = new System.Drawing.Size(160, 23);
-            this.fButton.TabIndex = 14;
-            this.fButton.Text = "Front - Clockwise (F)";
-            this.toolTip.SetToolTip(this.fButton, "[F]");
-            this.fButton.UseVisualStyleBackColor = true;
-            this.fButton.Click += new System.EventHandler(this.fButton_Click);
+            fButton.Location = new Point(13, 255);
+            fButton.Margin = new Padding(4, 3, 4, 3);
+            fButton.Name = "fButton";
+            fButton.Size = new Size(187, 27);
+            fButton.TabIndex = 14;
+            fButton.Text = "Front - Clockwise (F)";
+            toolTip.SetToolTip(fButton, "[F]");
+            fButton.UseVisualStyleBackColor = true;
+            fButton.Click += fButton_Click;
             // 
             // lPrimeButton
             // 
-            this.lPrimeButton.Location = new System.Drawing.Point(177, 134);
-            this.lPrimeButton.Name = "lPrimeButton";
-            this.lPrimeButton.Size = new System.Drawing.Size(171, 23);
-            this.lPrimeButton.TabIndex = 9;
-            this.lPrimeButton.Text = "Left  - Counterclockwise (L\')";
-            this.toolTip.SetToolTip(this.lPrimeButton, "[Shift + L]");
-            this.lPrimeButton.UseVisualStyleBackColor = true;
-            this.lPrimeButton.Click += new System.EventHandler(this.lPrimeButton_Click);
+            lPrimeButton.Location = new Point(206, 155);
+            lPrimeButton.Margin = new Padding(4, 3, 4, 3);
+            lPrimeButton.Name = "lPrimeButton";
+            lPrimeButton.Size = new Size(200, 27);
+            lPrimeButton.TabIndex = 9;
+            lPrimeButton.Text = "Left  - Counterclockwise (L')";
+            toolTip.SetToolTip(lPrimeButton, "[Shift + L]");
+            lPrimeButton.UseVisualStyleBackColor = true;
+            lPrimeButton.Click += lPrimeButton_Click;
             // 
             // lButton
             // 
-            this.lButton.Location = new System.Drawing.Point(11, 134);
-            this.lButton.Name = "lButton";
-            this.lButton.Size = new System.Drawing.Size(160, 23);
-            this.lButton.TabIndex = 8;
-            this.lButton.Text = "Left - Clockwise (L)";
-            this.toolTip.SetToolTip(this.lButton, "[L]");
-            this.lButton.UseVisualStyleBackColor = true;
-            this.lButton.Click += new System.EventHandler(this.lButton_Click);
+            lButton.Location = new Point(13, 155);
+            lButton.Margin = new Padding(4, 3, 4, 3);
+            lButton.Name = "lButton";
+            lButton.Size = new Size(187, 27);
+            lButton.TabIndex = 8;
+            lButton.Text = "Left - Clockwise (L)";
+            toolTip.SetToolTip(lButton, "[L]");
+            lButton.UseVisualStyleBackColor = true;
+            lButton.Click += lButton_Click;
             // 
             // rPrimeButton
             // 
-            this.rPrimeButton.Location = new System.Drawing.Point(177, 192);
-            this.rPrimeButton.Name = "rPrimeButton";
-            this.rPrimeButton.Size = new System.Drawing.Size(171, 23);
-            this.rPrimeButton.TabIndex = 13;
-            this.rPrimeButton.Text = "Right - Counterclockwise (R\')";
-            this.toolTip.SetToolTip(this.rPrimeButton, "[Shift + R]");
-            this.rPrimeButton.UseVisualStyleBackColor = true;
-            this.rPrimeButton.Click += new System.EventHandler(this.rPrimeButton_Click);
+            rPrimeButton.Location = new Point(206, 222);
+            rPrimeButton.Margin = new Padding(4, 3, 4, 3);
+            rPrimeButton.Name = "rPrimeButton";
+            rPrimeButton.Size = new Size(200, 27);
+            rPrimeButton.TabIndex = 13;
+            rPrimeButton.Text = "Right - Counterclockwise (R')";
+            toolTip.SetToolTip(rPrimeButton, "[Shift + R]");
+            rPrimeButton.UseVisualStyleBackColor = true;
+            rPrimeButton.Click += rPrimeButton_Click;
             // 
             // rButton
             // 
-            this.rButton.Location = new System.Drawing.Point(11, 192);
-            this.rButton.Name = "rButton";
-            this.rButton.Size = new System.Drawing.Size(160, 23);
-            this.rButton.TabIndex = 12;
-            this.rButton.Text = "Right - Clockwise (R)";
-            this.toolTip.SetToolTip(this.rButton, "[R]");
-            this.rButton.UseVisualStyleBackColor = true;
-            this.rButton.Click += new System.EventHandler(this.rButton_Click);
+            rButton.Location = new Point(13, 222);
+            rButton.Margin = new Padding(4, 3, 4, 3);
+            rButton.Name = "rButton";
+            rButton.Size = new Size(187, 27);
+            rButton.TabIndex = 12;
+            rButton.Text = "Right - Clockwise (R)";
+            toolTip.SetToolTip(rButton, "[R]");
+            rButton.UseVisualStyleBackColor = true;
+            rButton.Click += rButton_Click;
             // 
             // dPrimeButton
             // 
-            this.dPrimeButton.Location = new System.Drawing.Point(177, 105);
-            this.dPrimeButton.Name = "dPrimeButton";
-            this.dPrimeButton.Size = new System.Drawing.Size(171, 23);
-            this.dPrimeButton.TabIndex = 7;
-            this.dPrimeButton.Text = "Down - Counterclockwise (D\')";
-            this.toolTip.SetToolTip(this.dPrimeButton, "[Shift + D]");
-            this.dPrimeButton.UseVisualStyleBackColor = true;
-            this.dPrimeButton.Click += new System.EventHandler(this.dPrimeButton_Click);
+            dPrimeButton.Location = new Point(206, 121);
+            dPrimeButton.Margin = new Padding(4, 3, 4, 3);
+            dPrimeButton.Name = "dPrimeButton";
+            dPrimeButton.Size = new Size(200, 27);
+            dPrimeButton.TabIndex = 7;
+            dPrimeButton.Text = "Down - Counterclockwise (D')";
+            toolTip.SetToolTip(dPrimeButton, "[Shift + D]");
+            dPrimeButton.UseVisualStyleBackColor = true;
+            dPrimeButton.Click += dPrimeButton_Click;
             // 
             // dButton
             // 
-            this.dButton.Location = new System.Drawing.Point(11, 105);
-            this.dButton.Name = "dButton";
-            this.dButton.Size = new System.Drawing.Size(160, 23);
-            this.dButton.TabIndex = 6;
-            this.dButton.Text = "Down - Clockwise (D)";
-            this.toolTip.SetToolTip(this.dButton, "[D]");
-            this.dButton.UseVisualStyleBackColor = true;
-            this.dButton.Click += new System.EventHandler(this.dButton_Click);
+            dButton.Location = new Point(13, 121);
+            dButton.Margin = new Padding(4, 3, 4, 3);
+            dButton.Name = "dButton";
+            dButton.Size = new Size(187, 27);
+            dButton.TabIndex = 6;
+            dButton.Text = "Down - Clockwise (D)";
+            toolTip.SetToolTip(dButton, "[D]");
+            dButton.UseVisualStyleBackColor = true;
+            dButton.Click += dButton_Click;
             // 
             // uPrimeButton
             // 
-            this.uPrimeButton.Location = new System.Drawing.Point(177, 47);
-            this.uPrimeButton.Name = "uPrimeButton";
-            this.uPrimeButton.Size = new System.Drawing.Size(171, 23);
-            this.uPrimeButton.TabIndex = 3;
-            this.uPrimeButton.Text = "Up - Counterclockwise (U\')";
-            this.toolTip.SetToolTip(this.uPrimeButton, "[Shift + U]");
-            this.uPrimeButton.UseVisualStyleBackColor = true;
-            this.uPrimeButton.Click += new System.EventHandler(this.uPrimeButton_Click);
+            uPrimeButton.Location = new Point(206, 54);
+            uPrimeButton.Margin = new Padding(4, 3, 4, 3);
+            uPrimeButton.Name = "uPrimeButton";
+            uPrimeButton.Size = new Size(200, 27);
+            uPrimeButton.TabIndex = 3;
+            uPrimeButton.Text = "Up - Counterclockwise (U')";
+            toolTip.SetToolTip(uPrimeButton, "[Shift + U]");
+            uPrimeButton.UseVisualStyleBackColor = true;
+            uPrimeButton.Click += uPrimeButton_Click;
             // 
             // uButton
             // 
-            this.uButton.Location = new System.Drawing.Point(11, 47);
-            this.uButton.Name = "uButton";
-            this.uButton.Size = new System.Drawing.Size(160, 23);
-            this.uButton.TabIndex = 2;
-            this.uButton.Text = "Up - Clockwise (U)";
-            this.toolTip.SetToolTip(this.uButton, "[U]");
-            this.uButton.UseVisualStyleBackColor = true;
-            this.uButton.Click += new System.EventHandler(this.uButton_Click);
+            uButton.Location = new Point(13, 54);
+            uButton.Margin = new Padding(4, 3, 4, 3);
+            uButton.Name = "uButton";
+            uButton.Size = new Size(187, 27);
+            uButton.TabIndex = 2;
+            uButton.Text = "Up - Clockwise (U)";
+            toolTip.SetToolTip(uButton, "[U]");
+            uButton.UseVisualStyleBackColor = true;
+            uButton.Click += uButton_Click;
             // 
             // addToQueueRadioButton
             // 
-            this.addToQueueRadioButton.AutoSize = true;
-            this.addToQueueRadioButton.Location = new System.Drawing.Point(177, 19);
-            this.addToQueueRadioButton.Name = "addToQueueRadioButton";
-            this.addToQueueRadioButton.Size = new System.Drawing.Size(89, 17);
-            this.addToQueueRadioButton.TabIndex = 1;
-            this.addToQueueRadioButton.TabStop = true;
-            this.addToQueueRadioButton.Text = "Add to queue";
-            this.addToQueueRadioButton.UseVisualStyleBackColor = true;
+            addToQueueRadioButton.AutoSize = true;
+            addToQueueRadioButton.Location = new Point(206, 22);
+            addToQueueRadioButton.Margin = new Padding(4, 3, 4, 3);
+            addToQueueRadioButton.Name = "addToQueueRadioButton";
+            addToQueueRadioButton.Size = new Size(97, 19);
+            addToQueueRadioButton.TabIndex = 1;
+            addToQueueRadioButton.TabStop = true;
+            addToQueueRadioButton.Text = "Add to queue";
+            addToQueueRadioButton.UseVisualStyleBackColor = true;
             // 
             // rotateRadioButton
             // 
-            this.rotateRadioButton.AutoSize = true;
-            this.rotateRadioButton.Checked = true;
-            this.rotateRadioButton.Location = new System.Drawing.Point(73, 19);
-            this.rotateRadioButton.Name = "rotateRadioButton";
-            this.rotateRadioButton.Size = new System.Drawing.Size(57, 17);
-            this.rotateRadioButton.TabIndex = 0;
-            this.rotateRadioButton.TabStop = true;
-            this.rotateRadioButton.Text = "Rotate";
-            this.rotateRadioButton.UseVisualStyleBackColor = true;
+            rotateRadioButton.AutoSize = true;
+            rotateRadioButton.Checked = true;
+            rotateRadioButton.Location = new Point(85, 22);
+            rotateRadioButton.Margin = new Padding(4, 3, 4, 3);
+            rotateRadioButton.Name = "rotateRadioButton";
+            rotateRadioButton.Size = new Size(59, 19);
+            rotateRadioButton.TabIndex = 0;
+            rotateRadioButton.TabStop = true;
+            rotateRadioButton.Text = "Rotate";
+            rotateRadioButton.UseVisualStyleBackColor = true;
             // 
-            // panel1
+            // statusPanel
             // 
-            this.panel1.Controls.Add(this.faceLabel);
-            this.panel1.Controls.Add(this.zoomLabel);
-            this.panel1.Controls.Add(this.rotationLabel);
-            this.panel1.Controls.Add(this.statusLabel);
-            this.panel1.Location = new System.Drawing.Point(12, 537);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(600, 30);
-            this.panel1.TabIndex = 0;
+            statusPanel.Controls.Add(faceLabel);
+            statusPanel.Controls.Add(zoomLabel);
+            statusPanel.Controls.Add(rotationLabel);
+            statusPanel.Controls.Add(statusLabel);
+            statusPanel.Location = new Point(14, 620);
+            statusPanel.Margin = new Padding(4, 3, 4, 3);
+            statusPanel.Name = "statusPanel";
+            statusPanel.Size = new Size(700, 35);
+            statusPanel.TabIndex = 0;
             // 
             // faceLabel
             // 
-            this.faceLabel.AutoSize = true;
-            this.faceLabel.Location = new System.Drawing.Point(507, 6);
-            this.faceLabel.Name = "faceLabel";
-            this.faceLabel.Size = new System.Drawing.Size(34, 13);
-            this.faceLabel.TabIndex = 0;
-            this.faceLabel.Text = "Face:";
+            faceLabel.AutoSize = true;
+            faceLabel.Location = new Point(592, 7);
+            faceLabel.Margin = new Padding(4, 0, 4, 0);
+            faceLabel.Name = "faceLabel";
+            faceLabel.Size = new Size(34, 15);
+            faceLabel.TabIndex = 0;
+            faceLabel.Text = "Face:";
             // 
             // zoomLabel
             // 
-            this.zoomLabel.AutoSize = true;
-            this.zoomLabel.Location = new System.Drawing.Point(399, 6);
-            this.zoomLabel.Name = "zoomLabel";
-            this.zoomLabel.Size = new System.Drawing.Size(60, 13);
-            this.zoomLabel.TabIndex = 0;
-            this.zoomLabel.Text = "Zoom: 80%";
+            zoomLabel.AutoSize = true;
+            zoomLabel.Location = new Point(465, 7);
+            zoomLabel.Margin = new Padding(4, 0, 4, 0);
+            zoomLabel.Name = "zoomLabel";
+            zoomLabel.Size = new Size(67, 15);
+            zoomLabel.TabIndex = 0;
+            zoomLabel.Text = "Zoom: 80%";
             // 
             // rotationLabel
             // 
-            this.rotationLabel.AutoSize = true;
-            this.rotationLabel.Location = new System.Drawing.Point(145, 6);
-            this.rotationLabel.Name = "rotationLabel";
-            this.rotationLabel.Size = new System.Drawing.Size(134, 13);
-            this.rotationLabel.TabIndex = 0;
-            this.rotationLabel.Text = "Rotation: x = 0; y = 0; z = 0";
-            this.rotationLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            rotationLabel.AutoSize = true;
+            rotationLabel.Location = new Point(169, 7);
+            rotationLabel.Margin = new Padding(4, 0, 4, 0);
+            rotationLabel.Name = "rotationLabel";
+            rotationLabel.Size = new Size(147, 15);
+            rotationLabel.TabIndex = 0;
+            rotationLabel.Text = "Rotation: x = 0; y = 0; z = 0";
+            rotationLabel.TextAlign = ContentAlignment.MiddleRight;
             // 
             // statusLabel
             // 
-            this.statusLabel.AutoSize = true;
-            this.statusLabel.Location = new System.Drawing.Point(3, 6);
-            this.statusLabel.Name = "statusLabel";
-            this.statusLabel.Size = new System.Drawing.Size(74, 13);
-            this.statusLabel.TabIndex = 0;
-            this.statusLabel.Text = "Status: Ready";
+            statusLabel.AutoSize = true;
+            statusLabel.Location = new Point(4, 7);
+            statusLabel.Margin = new Padding(4, 0, 4, 0);
+            statusLabel.Name = "statusLabel";
+            statusLabel.Size = new Size(77, 15);
+            statusLabel.TabIndex = 0;
+            statusLabel.Text = "Status: Ready";
             // 
             // showViewButton
             // 
-            this.showViewButton.Location = new System.Drawing.Point(262, 17);
-            this.showViewButton.Name = "showViewButton";
-            this.showViewButton.Size = new System.Drawing.Size(75, 23);
-            this.showViewButton.TabIndex = 1;
-            this.showViewButton.Text = "Show";
-            this.showViewButton.UseVisualStyleBackColor = true;
-            this.showViewButton.Click += new System.EventHandler(this.showViewButton_Click);
+            showViewButton.Location = new Point(306, 20);
+            showViewButton.Margin = new Padding(4, 3, 4, 3);
+            showViewButton.Name = "showViewButton";
+            showViewButton.Size = new Size(88, 27);
+            showViewButton.TabIndex = 1;
+            showViewButton.Text = "Show";
+            showViewButton.UseVisualStyleBackColor = true;
+            showViewButton.Click += showViewButton_Click;
             // 
             // viewGroupBox
             // 
-            this.viewGroupBox.Controls.Add(this.label2);
-            this.viewGroupBox.Controls.Add(this.showViewButton);
-            this.viewGroupBox.Controls.Add(this.viewComboBox);
-            this.viewGroupBox.Location = new System.Drawing.Point(618, 27);
-            this.viewGroupBox.Name = "viewGroupBox";
-            this.viewGroupBox.Size = new System.Drawing.Size(354, 52);
-            this.viewGroupBox.TabIndex = 1;
-            this.viewGroupBox.TabStop = false;
-            this.viewGroupBox.Text = "View";
+            viewGroupBox.Controls.Add(label2);
+            viewGroupBox.Controls.Add(showViewButton);
+            viewGroupBox.Controls.Add(viewComboBox);
+            viewGroupBox.Location = new Point(721, 31);
+            viewGroupBox.Margin = new Padding(4, 3, 4, 3);
+            viewGroupBox.Name = "viewGroupBox";
+            viewGroupBox.Padding = new Padding(4, 3, 4, 3);
+            viewGroupBox.Size = new Size(413, 60);
+            viewGroupBox.TabIndex = 1;
+            viewGroupBox.TabStop = false;
+            viewGroupBox.Text = "View";
             // 
             // label2
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(45, 22);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(30, 13);
-            this.label2.TabIndex = 0;
-            this.label2.Text = "View";
+            label2.AutoSize = true;
+            label2.Location = new Point(52, 25);
+            label2.Margin = new Padding(4, 0, 4, 0);
+            label2.Name = "label2";
+            label2.Size = new Size(32, 15);
+            label2.TabIndex = 0;
+            label2.Text = "View";
             // 
             // viewComboBox
             // 
-            this.viewComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.viewComboBox.FormattingEnabled = true;
-            this.viewComboBox.Items.AddRange(new object[] {
-            "Defauft",
-            "Top face",
-            "Bottom face",
-            "Left face",
-            "Right face",
-            "Front face",
-            "Back face"});
-            this.viewComboBox.Location = new System.Drawing.Point(81, 19);
-            this.viewComboBox.Name = "viewComboBox";
-            this.viewComboBox.Size = new System.Drawing.Size(175, 21);
-            this.viewComboBox.TabIndex = 0;
+            viewComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            viewComboBox.FormattingEnabled = true;
+            viewComboBox.Items.AddRange(new object[] { "Defauft", "Top face", "Bottom face", "Left face", "Right face", "Front face", "Back face" });
+            viewComboBox.Location = new Point(94, 22);
+            viewComboBox.Margin = new Padding(4, 3, 4, 3);
+            viewComboBox.Name = "viewComboBox";
+            viewComboBox.Size = new Size(204, 23);
+            viewComboBox.TabIndex = 0;
+            viewComboBox.SelectedIndexChanged += viewComboBox_SelectedIndexChanged;
             // 
             // fileToolStripMenuItem
             // 
-            this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.resetToolStripMenuItem,
-            this.scrambleToolStripMenuItem,
-            this.solveToolStripMenuItem,
-            this.toolStripMenuItem1,
-            this.settingsToolStripMenuItem,
-            this.toolStripMenuItem2,
-            this.exitToolStripMenuItem});
-            this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(88, 20);
-            this.fileToolStripMenuItem.Text = "&Rubik\'s Cube";
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { resetToolStripMenuItem, scrambleToolStripMenuItem, solveToolStripMenuItem, toolStripMenuItem1, settingsToolStripMenuItem, toolStripMenuItem2, exitToolStripMenuItem });
+            fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            fileToolStripMenuItem.Size = new Size(88, 20);
+            fileToolStripMenuItem.Text = "&Rubik's Cube";
             // 
             // resetToolStripMenuItem
             // 
-            this.resetToolStripMenuItem.Name = "resetToolStripMenuItem";
-            this.resetToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.R)));
-            this.resetToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
-            this.resetToolStripMenuItem.Text = "&Reset";
-            this.resetToolStripMenuItem.Click += new System.EventHandler(this.resetToolStripMenuItem_Click);
+            resetToolStripMenuItem.Name = "resetToolStripMenuItem";
+            resetToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.R;
+            resetToolStripMenuItem.Size = new Size(163, 22);
+            resetToolStripMenuItem.Text = "&Reset";
+            resetToolStripMenuItem.Click += resetToolStripMenuItem_Click;
             // 
             // scrambleToolStripMenuItem
             // 
-            this.scrambleToolStripMenuItem.Name = "scrambleToolStripMenuItem";
-            this.scrambleToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.scrambleToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
-            this.scrambleToolStripMenuItem.Text = "&Scramble";
-            this.scrambleToolStripMenuItem.Click += new System.EventHandler(this.scrambleToolStripMenuItem_Click);
+            scrambleToolStripMenuItem.Name = "scrambleToolStripMenuItem";
+            scrambleToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.S;
+            scrambleToolStripMenuItem.Size = new Size(163, 22);
+            scrambleToolStripMenuItem.Text = "&Scramble";
+            scrambleToolStripMenuItem.Click += scrambleToolStripMenuItem_Click;
             // 
             // solveToolStripMenuItem
             // 
-            this.solveToolStripMenuItem.Name = "solveToolStripMenuItem";
-            this.solveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.V)));
-            this.solveToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
-            this.solveToolStripMenuItem.Text = "Sol&ve";
-            this.solveToolStripMenuItem.Click += new System.EventHandler(this.solveToolStripMenuItem_Click);
+            solveToolStripMenuItem.Name = "solveToolStripMenuItem";
+            solveToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.V;
+            solveToolStripMenuItem.Size = new Size(163, 22);
+            solveToolStripMenuItem.Text = "Sol&ve";
+            solveToolStripMenuItem.Click += solveToolStripMenuItem_Click;
             // 
             // toolStripMenuItem1
             // 
-            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(160, 6);
+            toolStripMenuItem1.Name = "toolStripMenuItem1";
+            toolStripMenuItem1.Size = new Size(160, 6);
             // 
             // settingsToolStripMenuItem
             // 
-            this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
-            this.settingsToolStripMenuItem.Text = "S&ettings...";
-            this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
+            settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+            settingsToolStripMenuItem.Size = new Size(163, 22);
+            settingsToolStripMenuItem.Text = "S&ettings...";
+            settingsToolStripMenuItem.Click += settingsToolStripMenuItem_Click;
             // 
             // toolStripMenuItem2
             // 
-            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(160, 6);
+            toolStripMenuItem2.Name = "toolStripMenuItem2";
+            toolStripMenuItem2.Size = new Size(160, 6);
             // 
             // exitToolStripMenuItem
             // 
-            this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
-            this.exitToolStripMenuItem.Text = "E&xit";
-            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            exitToolStripMenuItem.ShortcutKeys = Keys.Alt | Keys.F4;
+            exitToolStripMenuItem.Size = new Size(163, 22);
+            exitToolStripMenuItem.Text = "E&xit";
+            exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
             // 
             // helpToolStripMenuItem
             // 
-            this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.aboutToolStripMenuItem});
-            this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
-            this.helpToolStripMenuItem.Text = "&Help";
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { aboutToolStripMenuItem });
+            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            helpToolStripMenuItem.Size = new Size(44, 20);
+            helpToolStripMenuItem.Text = "&Help";
             // 
             // aboutToolStripMenuItem
             // 
-            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.H)));
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
-            this.aboutToolStripMenuItem.Text = "&About";
-            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
+            aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            aboutToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.H;
+            aboutToolStripMenuItem.Size = new Size(150, 22);
+            aboutToolStripMenuItem.Text = "&About";
+            aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
             // menuStrip
             // 
-            this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem,
-            this.helpToolStripMenuItem});
-            this.menuStrip.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip.Name = "menuStrip";
-            this.menuStrip.Size = new System.Drawing.Size(984, 24);
-            this.menuStrip.TabIndex = 0;
-            this.menuStrip.Text = "menuStrip1";
+            menuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, helpToolStripMenuItem });
+            menuStrip.Location = new Point(0, 0);
+            menuStrip.Name = "menuStrip";
+            menuStrip.Padding = new Padding(7, 2, 0, 2);
+            menuStrip.Size = new Size(1148, 24);
+            menuStrip.TabIndex = 0;
+            menuStrip.Text = "menuStrip1";
+            // 
+            // renderPanel
+            // 
+            renderPanel.Location = new Point(12, 31);
+            renderPanel.Name = "renderPanel";
+            renderPanel.Size = new Size(702, 583);
+            renderPanel.TabIndex = 3;
+            renderPanel.Paint += renderPanel_Paint;
+            renderPanel.MouseClick += renderPanel_MouseClick;
+            renderPanel.MouseMove += renderPanel_MouseMove;
             // 
             // MainForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(984, 579);
-            this.Controls.Add(this.viewGroupBox);
-            this.Controls.Add(this.panel1);
-            this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.menuStrip);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.KeyPreview = true;
-            this.MainMenuStrip = this.menuStrip;
-            this.MaximizeBox = false;
-            this.Name = "MainForm";
-            this.Text = "Virtual Rubik\'s Cube";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
-            this.Load += new System.EventHandler(this.MainForm_Load);
-            this.Paint += new System.Windows.Forms.PaintEventHandler(this.MainForm_Paint);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);
-            this.MouseClick += new System.Windows.Forms.MouseEventHandler(this.MainForm_MouseClick);
-            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MainForm_MouseMove);
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
-            this.viewGroupBox.ResumeLayout(false);
-            this.viewGroupBox.PerformLayout();
-            this.menuStrip.ResumeLayout(false);
-            this.menuStrip.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1148, 668);
+            Controls.Add(renderPanel);
+            Controls.Add(viewGroupBox);
+            Controls.Add(statusPanel);
+            Controls.Add(groupBox1);
+            Controls.Add(menuStrip);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            KeyPreview = true;
+            MainMenuStrip = menuStrip;
+            Margin = new Padding(4, 3, 4, 3);
+            MaximizeBox = false;
+            Name = "MainForm";
+            Text = "Virtual Rubik's Cube";
+            FormClosed += MainForm_FormClosed;
+            Load += MainForm_Load;
+            KeyDown += MainForm_KeyDown;
+            groupBox1.ResumeLayout(false);
+            groupBox1.PerformLayout();
+            statusPanel.ResumeLayout(false);
+            statusPanel.PerformLayout();
+            viewGroupBox.ResumeLayout(false);
+            viewGroupBox.PerformLayout();
+            menuStrip.ResumeLayout(false);
+            menuStrip.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
-        private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.Button setQueueToSolutionButton;
-        private System.Windows.Forms.Button clearQueueButton;
-        private System.Windows.Forms.Button executeQueueButton;
-        private System.Windows.Forms.Button bPrimeButton;
-        private System.Windows.Forms.Button bButton;
-        private System.Windows.Forms.Button fPrimeButton;
-        private System.Windows.Forms.Button fButton;
-        private System.Windows.Forms.Button lPrimeButton;
-        private System.Windows.Forms.Button lButton;
-        private System.Windows.Forms.Button rPrimeButton;
-        private System.Windows.Forms.Button rButton;
-        private System.Windows.Forms.Button dPrimeButton;
-        private System.Windows.Forms.Button dButton;
-        private System.Windows.Forms.Button uPrimeButton;
-        private System.Windows.Forms.Button uButton;
-        private System.Windows.Forms.RadioButton addToQueueRadioButton;
-        private System.Windows.Forms.RadioButton rotateRadioButton;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Button zPrimeButton;
-        private System.Windows.Forms.Button zButton;
-        private System.Windows.Forms.Button xPrimeButton;
-        private System.Windows.Forms.Button xButton;
-        private System.Windows.Forms.Button yPrimeButton;
-        private System.Windows.Forms.Button yButton;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Label faceLabel;
-        private System.Windows.Forms.Label zoomLabel;
-        private System.Windows.Forms.Label rotationLabel;
-        private System.Windows.Forms.Label statusLabel;
-        private System.Windows.Forms.Button showViewButton;
-        private System.Windows.Forms.GroupBox viewGroupBox;
-        private System.Windows.Forms.ComboBox viewComboBox;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.ListBox moveQueueListBox;
-        private System.Windows.Forms.ToolTip toolTip;
-        private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem resetToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem scrambleToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem solveToolStripMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
-        private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
-        private System.Windows.Forms.MenuStrip menuStrip;
+        private GroupBox groupBox1;
+        private Button setQueueToSolutionButton;
+        private Button clearQueueButton;
+        private Button executeQueueButton;
+        private Button bPrimeButton;
+        private Button bButton;
+        private Button fPrimeButton;
+        private Button fButton;
+        private Button lPrimeButton;
+        private Button lButton;
+        private Button rPrimeButton;
+        private Button rButton;
+        private Button dPrimeButton;
+        private Button dButton;
+        private Button uPrimeButton;
+        private Button uButton;
+        private RadioButton addToQueueRadioButton;
+        private RadioButton rotateRadioButton;
+        private Label label1;
+        private Button zPrimeButton;
+        private Button zButton;
+        private Button xPrimeButton;
+        private Button xButton;
+        private Button yPrimeButton;
+        private Button yButton;
+        private Panel statusPanel;
+        private Label faceLabel;
+        private Label zoomLabel;
+        private Label rotationLabel;
+        private Label statusLabel;
+        private Button showViewButton;
+        private GroupBox viewGroupBox;
+        private ComboBox viewComboBox;
+        private Label label2;
+        private ListBox moveQueueListBox;
+        private ToolTip toolTip;
+        private ToolStripMenuItem fileToolStripMenuItem;
+        private ToolStripMenuItem resetToolStripMenuItem;
+        private ToolStripMenuItem scrambleToolStripMenuItem;
+        private ToolStripMenuItem solveToolStripMenuItem;
+        private ToolStripSeparator toolStripMenuItem1;
+        private ToolStripMenuItem settingsToolStripMenuItem;
+        private ToolStripSeparator toolStripMenuItem2;
+        private ToolStripMenuItem exitToolStripMenuItem;
+        private ToolStripMenuItem helpToolStripMenuItem;
+        private ToolStripMenuItem aboutToolStripMenuItem;
+        private MenuStrip menuStrip;
+        private Panel renderPanel;
     }
 }
 

@@ -1,27 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace VirtualRubiksCube
+﻿namespace VirtualRubiksCube
 {
     public class Point3D
     {
-        // Properties
+        #region Properties
         public double X { get; set; }
         public double Y { get; set; }
         public double Z { get; set; }
+        #endregion
 
-        // Constructor
+        #region Constructor
         public Point3D(double x, double y, double z)
         {
             X = x;
             Y = y;
             Z = z;
         }
+        #endregion
 
-        // Methods
+        #region Methods
         public Point3D Clone()
         {
             return new Point3D(X, Y, Z);
@@ -29,8 +25,8 @@ namespace VirtualRubiksCube
 
         public Point3D Rotate(double xAngle, double yAngle, double zAngle) // Real axis rotation, not arbitrary axis rotation
         {
-            Point3D startPoint = this.Clone();
-            Point3D endPoint = this.Clone();
+            Point3D startPoint = Clone();
+            Point3D endPoint = Clone();
 
             if (zAngle != 0) // not used for projection
             {
@@ -57,7 +53,8 @@ namespace VirtualRubiksCube
         {
             double x = X * Convert.ToDouble(imageDistance) / viewDistance + viewWidth / 2;
             double y = Y * Convert.ToDouble(imageDistance) / viewDistance + viewHeight / 2;
-            return new Point3D(x, y, this.Z); // only x and y are projected, z is used for ordering the faces
+            return new Point3D(x, y, Z); // only x and y are projected, z is used for ordering the faces
         }
+        #endregion
     }
 }

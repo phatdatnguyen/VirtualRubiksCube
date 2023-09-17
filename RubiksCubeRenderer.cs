@@ -1,37 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
+﻿using System.Diagnostics;
 using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace VirtualRubiksCube
 {
     public class RubiksCubeRenderer
     {
-        // Fields
+        #region Fields
         private RubiksCube rubiksCube;
-        private Thread animateThread;
-        private Thread renderThread;
-        private AutoResetEvent[] animateHandle;
-        private AutoResetEvent[] renderHandle;
-        //private RenderInfo[] renderInfos;
+        private CancellationTokenSource cancellationTokenSource;
+        private Task? renderTask;
         private List<double> frameTimes;
         private RenderInfo currentRenderInfo;
 
-        // Properties
+        // flags
+        private bool isPaused;
+        private bool isTerminating;
+        #endregion
+
+        #region Properties
         public bool IsRunning { get; private set; }
         public double FrameRate { get; private set; } // fps
+        #endregion
 
-        // Event
+        #region Event
         public delegate void RenderHandler(object sender, RenderEventArgs e);
-        public event RenderHandler OnRender;
+        public event RenderHandler? OnRender;
+        #endregion
 
-        // Constructor
+        #region Constructor
         public RubiksCubeRenderer(RubiksCube rubiksCube, RenderInfo initialCommand)
         {
             this.rubiksCube = rubiksCube;
@@ -40,27 +36,19 @@ namespace VirtualRubiksCube
             frameTimes = new List<double>();
             IsRunning = false;
 
-            animateHandle = new AutoResetEvent[2];
-            for (int i = 0; i < animateHandle.Length; i++)
-                animateHandle[i] = new AutoResetEvent(false);
-
-            renderHandle = new AutoResetEvent[2];
-            for (int i = 0; i < renderHandle.Length; i++)
-                renderHandle[i] = new AutoResetEvent(true);
-
             currentRenderInfo = initialCommand;
-        }
 
-        // Methods
+            cancellationTokenSource = new CancellationTokenSource();
+        }
+        #endregion
+
+        #region Methods
         public void Start()
         {
             if (!IsRunning)
             {
                 IsRunning = true;
-                animateThread = new Thread(AnimateLoop);
-                animateThread.Start();
-                renderThread = new Thread(RenderLoop);
-                renderThread.Start();
+                renderTask = Task.Run(async () => await RenderLoop(cancellationTokenSource.Token));
             }
         }
 
@@ -69,10 +57,16 @@ namespace VirtualRubiksCube
             if (IsRunning)
             {
                 IsRunning = false;
-                animateThread.Join();
-                renderThread.Join();
-                FrameRate = 0;
-                frameTimes.Clear();
+                isPaused = true;
+            }
+        }
+
+        public void Resume()
+        {
+            if (!IsRunning)
+            {
+                IsRunning = true;
+                isPaused = false;
             }
         }
 
@@ -81,53 +75,49 @@ namespace VirtualRubiksCube
             if (IsRunning)
             {
                 IsRunning = false;
-                animateThread.Abort();
-                renderThread.Abort();
+                isTerminating = true;
+                cancellationTokenSource?.Cancel();
+                renderTask?.Wait();
+                Thread.Sleep(500);
             }
         }
 
-        private void AnimateLoop()
+        private async Task RenderLoop(CancellationToken cancellationToken)
         {
-            Stopwatch stopwatch = new Stopwatch();
-            int bufferIndex = 0x0;
-
-            while (IsRunning)
+            while (!cancellationToken.IsCancellationRequested)
             {
+                // Check for termination request
+                if (isTerminating)
+                    return;
+
+                // Check for pausing
+                while (isPaused)
+                {
+                    await Task.Delay(100, cancellationToken);
+                    if (isTerminating)
+                        return;
+                }
+
+                // Rendering work
+                Stopwatch stopwatch = new();
                 stopwatch.Start();
-                Animate(bufferIndex);
-                bufferIndex ^= 0x1;
-                stopwatch.Reset();
-            }
-        }
 
-        private void Animate(int bufferIndex)
-        {
-            renderHandle[bufferIndex].WaitOne();
+                // Animate move
+                if (rubiksCube.Controller != null)
+                {
+                    RotationInfo currentRotationInfo = rubiksCube.Controller.CurrentRotationInfo;
+                    if (currentRotationInfo.IsRotating)
+                    {
+                        rubiksCube.Controller.SetRotationInfo(currentRotationInfo);
+                        rubiksCube.Controller.RotateStep();
+                    }
+                }
 
-            //Update
-            RotationInfo currentRotationInfo = rubiksCube.Controller.CurrentRotationInfo;
-            if (currentRotationInfo.IsRotating)
-            {
-                rubiksCube.Controller.SetRotationInfo(currentRotationInfo);
-                rubiksCube.Controller.RotateStep();
-            }
-
-            animateHandle[bufferIndex].Set();
-        }
-
-        private void RenderLoop()
-        {
-            Stopwatch stopwatch = new Stopwatch();
-            int bufferIndex = 0x0;
-
-            while (IsRunning)
-            {
-                stopwatch.Restart();
-                BroadcastRender(bufferIndex);
-                bufferIndex ^= 0x1;
+                // Raise the event
+                OnRender?.Invoke(this, new RenderEventArgs(currentRenderInfo));
 
                 if (stopwatch.ElapsedMilliseconds < 15)
-                    Thread.Sleep(Math.Max(15 - (int)stopwatch.ElapsedMilliseconds, 0));
+                    await Task.Delay(Math.Max(15 - (int)stopwatch.ElapsedMilliseconds, 0), cancellationToken);
                 while (stopwatch.Elapsed.TotalMilliseconds < 1000.0 / 60) { }
 
                 stopwatch.Stop();
@@ -144,41 +134,52 @@ namespace VirtualRubiksCube
                 }
                 if (index > 0) frameTimes.RemoveRange(0, index);
                 FrameRate = counter + ((1000 - ms) / frameTimes[0]);
+
+                // Check for cancellation and exit the loop if requested
+                if (cancellationToken.IsCancellationRequested)
+                    break;
             }
         }
 
-        private void BroadcastRender(int bufferIndex)
+        private Face3D? GetMouseHoveredFace(List<Face3D> projectedFaces)
         {
-            animateHandle[bufferIndex].WaitOne();
+            Face3D? mouseHoverFace = null;
 
-            if (OnRender == null)
-                return;
-            //OnRender(this, new RenderEventArgs(currentRenderInfos[currentBufferIndex]));
-            OnRender(this, new RenderEventArgs(currentRenderInfo));
+            for (int i = projectedFaces.Count - 1; i >= 0; i--)
+            {
+                PointF[] vertices = projectedFaces[i].Vertices.Select(p => new PointF((float)p.X, (float)p.Y)).ToArray();
+                GraphicsPath graphicsPath = new();
+                graphicsPath.AddPolygon(vertices);
+                if (graphicsPath.IsVisible(currentRenderInfo.MousePosition))
+                {
+                    mouseHoverFace = projectedFaces[i];
+                    break;
+                }
+            }
 
-            renderHandle[bufferIndex].Set();
+            return mouseHoverFace;
         }
 
-        public Face3D Render(Graphics graphics, RenderInfo renderInfo) // return the face that has mouse cursor on it
+        public Face3D? RenderFaces(Graphics graphics, RenderInfo renderInfo)
         {
             currentRenderInfo = renderInfo;
 
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             // Rotate faces
-            List<Face3D> rotatedFaces = new List<Face3D>();
+            List<Face3D> rotatedFaces = new();
             foreach (Face3D face in rubiksCube.Faces)
                 rotatedFaces.Add(face.Rotate(renderInfo.RotationX, renderInfo.RotationY, renderInfo.RotationZ));
             
             // Project faces
-            List<Face3D> projectedFaces = new List<Face3D>();
+            List<Face3D> projectedFaces = new();
             foreach (Face3D face in rotatedFaces)
                 projectedFaces.Add(face.Project(currentRenderInfo.ViewWidth, currentRenderInfo.ViewHeight, renderInfo.ImageDistance, currentRenderInfo.ViewDistance));
 
             projectedFaces = projectedFaces.OrderBy(p => p.MinZ).ToList();
 
             // Render
-            Face3D mouseHoveredFace = GetMoveHoveredFace(projectedFaces);
+            Face3D? mouseHoveredFace = GetMouseHoveredFace(projectedFaces);
             foreach (Face3D projectedFace in projectedFaces)
             {
                 if (projectedFace != mouseHoveredFace) // render last
@@ -204,25 +205,6 @@ namespace VirtualRubiksCube
             return mouseHoveredFace;
         }
 
-        private Face3D GetMoveHoveredFace(List<Face3D> projectedFaces)
-        {
-            Face3D mouseHoverFace = null;
-
-            for (int i = projectedFaces.Count - 1; i >= 0; i--)
-            {
-                PointF[] vertices = projectedFaces[i].Vertices.Select(p => new PointF((float)p.X, (float)p.Y)).ToArray();
-                GraphicsPath graphicsPath = new GraphicsPath();
-                graphicsPath.AddPolygon(vertices);
-                if (graphicsPath.IsVisible(currentRenderInfo.MousePosition))
-                {
-                    mouseHoverFace = projectedFaces[i];
-                    break;
-                }
-            }
-
-            return mouseHoverFace;
-        }
-
         public void SetRenderInfo(RenderInfo renderInfo)
         {
             currentRenderInfo = renderInfo;
@@ -246,83 +228,6 @@ namespace VirtualRubiksCube
 
             return faceColor;
         }
-    }
-
-    public class RenderEventArgs : EventArgs
-    {
-        public RenderInfo RenderInfo { get; private set; }
-        public RenderEventArgs(RenderInfo renderInfo)
-        {
-            RenderInfo = renderInfo;
-        }
-    }
-
-    public struct RenderInfo
-    {
-        // Fields
-        private double rotationX;
-        private double rotationY;
-        private double rotationZ;
-
-        // Properties
-        public Point MousePosition { get; set; }
-
-        public double RotationX
-        {
-            get
-            {
-                return rotationX;
-            }
-            set
-            {
-                rotationX = value;
-                while (rotationX > 360)
-                    rotationX -= 360;
-                while (rotationX <= -360)
-                    rotationX += 360;
-            }
-        }
-        public double RotationY
-        {
-            get
-            {
-                return rotationY;
-            }
-            set
-            {
-                rotationY = value;
-                while (rotationY > 360)
-                    rotationY -= 360;
-                while (rotationY <= -360)
-                    rotationY += 360;
-            }
-        }
-        public double RotationZ
-        {
-            get
-            {
-                return rotationZ;
-            }
-            set
-            {
-                rotationZ = value;
-                while (rotationZ > 360)
-                    rotationZ -= 360;
-                while (rotationZ <= -360)
-                    rotationZ += 360;
-            }
-        }
-
-        public int ViewWidth { get; set; }
-        public int ViewHeight { get; set; }
-        public int ImageDistance { get; set; }
-        public int ViewDistance { get; set; }
-
-        public Color TopFaceColor { get; set; }
-        public Color BottomFaceColor { get; set; }
-        public Color LeftFaceColor { get; set; }
-        public Color RightFaceColor { get; set; }
-        public Color FrontFaceColor { get; set; }
-        public Color BackFaceColor { get; set; }
+        #endregion
     }
 }

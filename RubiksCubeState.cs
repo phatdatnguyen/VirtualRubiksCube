@@ -1,34 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace VirtualRubiksCube
+﻿namespace VirtualRubiksCube
 {
     public class RubiksCubeState
     {
-        // Property
-        public Dictionary<Cubelet, Tuple<sbyte, sbyte, sbyte>> CubeletsPosition { get; private set; }
+        #region Property
+        public Dictionary<Cubelet, (sbyte, sbyte, sbyte)> CubeletsPosition { get; private set; }
+        #endregion
 
-        // Contructor
-        public RubiksCubeState(Dictionary<Cubelet, Tuple<sbyte, sbyte, sbyte>> cubeletsPosition)
+        #region Contructor
+        public RubiksCubeState(Dictionary<Cubelet, (sbyte, sbyte, sbyte)> cubeletsPosition)
         {
             CubeletsPosition = cubeletsPosition;
         }
+        #endregion
 
-        // Method
+        #region Method
         public RubiksCubeState Clone()
         {
-            Dictionary<Cubelet, Tuple<sbyte, sbyte, sbyte>> cubeletsPosition = new Dictionary<Cubelet, Tuple<sbyte, sbyte, sbyte>>();
-            foreach (KeyValuePair<Cubelet, Tuple<sbyte, sbyte, sbyte>> cubeletPosition in CubeletsPosition)
+            Dictionary<Cubelet, (sbyte, sbyte, sbyte)> cubeletsPosition = new();
+            foreach (KeyValuePair<Cubelet, (sbyte, sbyte, sbyte)> cubeletPosition in CubeletsPosition)
             {
-                Tuple<sbyte, sbyte, sbyte> position = cubeletPosition.Value;
-                Tuple<sbyte, sbyte, sbyte> clonedPosition = new Tuple<sbyte, sbyte, sbyte>(position.Item1, position.Item2, position.Item3);
-                cubeletsPosition.Add(cubeletPosition.Key, clonedPosition);
+                (sbyte x, sbyte y, sbyte z) = cubeletPosition.Value;
+                cubeletsPosition.Add(cubeletPosition.Key, (x, y, z));
             }
                
             return new RubiksCubeState(cubeletsPosition);
         }
+        #endregion
     }
 }

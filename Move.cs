@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace VirtualRubiksCube
+﻿namespace VirtualRubiksCube
 {
     public class Move
     {
-        // Enumeration
+        #region Enumeration
         public enum RotationType { Clockwise, Counterclockwise }
+        #endregion
 
-        // Properties
+        #region Properties
         public RubiksCube.Layer Layer { get; private set; }
         public RotationType Type { get; private set; }
         public RubiksCube.Axis Axis
@@ -19,8 +14,8 @@ namespace VirtualRubiksCube
             get
             {
                 if (Layer == RubiksCube.Layer.Up ||
-                Layer == RubiksCube.Layer.MiddleY ||
-                Layer == RubiksCube.Layer.Down)
+                    Layer == RubiksCube.Layer.MiddleY ||
+                    Layer == RubiksCube.Layer.Down)
                     return RubiksCube.Axis.Y;
                 else if (Layer == RubiksCube.Layer.Left ||
                     Layer == RubiksCube.Layer.MiddleX ||
@@ -58,15 +53,17 @@ namespace VirtualRubiksCube
                 }
             }
         }
+        #endregion
 
-        // Constructor
+        #region Constructor
         public Move(RubiksCube.Layer layer, RotationType type)
         {
             Type = type;
             Layer = layer;
         }
+        #endregion
 
-        // Methods
+        #region Methods
         public Move GetCounterMove()
         {
             if (Type == RotationType.Clockwise)
@@ -84,5 +81,6 @@ namespace VirtualRubiksCube
         {
             return Layer.ToString() + " - " + Type.ToString();
         }
+        #endregion
     }
 }

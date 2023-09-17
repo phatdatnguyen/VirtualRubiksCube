@@ -1,28 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-namespace VirtualRubiksCube
+﻿namespace VirtualRubiksCube
 {
     public partial class ScrambleDialog : Form
     {
-        // Property
+        #region Properties
         public int NumberOfMoves = 20;
         public bool IncludeMiddleLayerRotation = false;
+        #endregion
 
-        // Constructor
+        #region Constructor
         public ScrambleDialog()
         {
             InitializeComponent();
         }
+        #endregion
 
-        // Methods
+        #region Method
         private void ScrambleDialog_FormClosed(object sender, FormClosedEventArgs e)
         {
             if (DialogResult == DialogResult.OK)
@@ -31,5 +23,6 @@ namespace VirtualRubiksCube
                 IncludeMiddleLayerRotation = middleLayerCheckBox.Checked;
             }
         }
+        #endregion
     }
 }

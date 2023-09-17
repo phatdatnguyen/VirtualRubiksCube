@@ -1,18 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-namespace VirtualRubiksCube
+﻿namespace VirtualRubiksCube
 {
     public partial class SettingDialog : Form
     {
-        // Properties
+        #region Properties
         public Color TopFaceColor { get; set; }
         public Color BottomFaceColor { get; set; }
         public Color LeftFaceColor { get; set; }
@@ -20,8 +10,9 @@ namespace VirtualRubiksCube
         public Color FrontFaceColor { get; set; }
         public Color BackFaceColor { get; set; }
         public int AnimationTime { get; set; }
+        #endregion
 
-        // Constructor
+        #region Constructor
         public SettingDialog()
         {
             InitializeComponent();
@@ -34,8 +25,9 @@ namespace VirtualRubiksCube
             BackFaceColor = Color.Blue;
             AnimationTime = 200;
         }
+        #endregion
 
-        // Methods
+        #region Methods
         private void topButton_Click(object sender, EventArgs e)
         {
             colorDialog.Color = TopFaceColor;
@@ -120,5 +112,6 @@ namespace VirtualRubiksCube
                 AnimationTime = animationTimeTrackBar.Value * 10;
             }
         }
+        #endregion
     }
 }

@@ -1,19 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace VirtualRubiksCube
+﻿namespace VirtualRubiksCube
 {
     public class RubiksCube
     {
-        // Fields
-        private List<Cubelet> cubelets = new List<Cubelet>();
-        private List<Face3D> faces = new List<Face3D>();
+        #region Fields
+        private List<Cubelet> cubelets = new();
+        private List<Face3D> faces = new();
+        #endregion
 
-        // Enumerations
+        #region Enumerations
         [Flags]
         public enum Layer
         {
@@ -30,8 +24,9 @@ namespace VirtualRubiksCube
         }
         public enum Face { None, Top, Bottom, Left, Right, Front, Back }
         public enum Axis { X, Y, Z };
+        #endregion
 
-        // Properties
+        #region Properties
         public byte CubeletSize { get; private set; }
         public List<Cubelet> Cubelets { get { return cubelets; } }
         public List<Face3D> Faces
@@ -46,10 +41,11 @@ namespace VirtualRubiksCube
                 return faces;
             }
         }
-        public RubiksCubeRenderer Renderer { get; set; }
-        public RubiksCubeController Controller { get; set; }
+        public RubiksCubeRenderer? Renderer { get; set; }
+        public RubiksCubeController? Controller { get; set; }
+        #endregion
 
-        // Constructor
+        #region Constructor
         public RubiksCube(byte cubeletSize)
         {
             CubeletSize = cubeletSize;
@@ -59,8 +55,9 @@ namespace VirtualRubiksCube
                     for (sbyte k = -1; k <= 1; k++)
                         cubelets.Add(new Cubelet(this, cubeletSize, i, j, k));
         }
+        #endregion
 
-        // Methods
+        #region Methods
         public static Face GetFaceFromLayer(Layer layer)
         {
             if (layer == Layer.Up)
@@ -96,5 +93,6 @@ namespace VirtualRubiksCube
             else
                 return Layer.None;
         }
+        #endregion
     }
 }

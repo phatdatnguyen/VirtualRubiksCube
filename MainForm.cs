@@ -1,23 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using System.Reflection;
 
 namespace VirtualRubiksCube
 {
     public partial class MainForm : Form
     {
-        // Fields
-        private RubiksCube rubiksCube = null;
-        private RubiksCubeController controller = null;
-        private RubiksCubeRenderer renderer = null;
+        #region Fields
+        private RubiksCube rubiksCube;
+        private RubiksCubeController controller;
+        private RubiksCubeRenderer renderer;
 
-        private RenderInfo currentRenderInfo = new RenderInfo();
+        private RenderInfo currentRenderInfo = new();
         private int viewWidth = 600;
         private int viewHeight = 500;
         private int defaultImageDistance = 80;
@@ -28,21 +20,23 @@ namespace VirtualRubiksCube
 
         private bool isRotating = false;
         private Point oldMousePosition;
-        private BindingSource moveQueueBindingSource = new BindingSource();
-        private SettingDialog settingDialog = new SettingDialog();
-        private Face3D mouseHoveredFace = null;
-        private Face3D selectedFace = null;
+        private BindingSource moveQueueBindingSource = new();
+        private SettingDialog settingDialog = new();
+        private Face3D? mouseHoveredFace;
+        private Face3D? selectedFace;
+        #endregion
 
-        // Constructors
+        #region Constructors
         public MainForm()
         {
             InitializeComponent();
 
-            SetStyle(ControlStyles.AllPaintingInWmPaint, true);
-            SetStyle(ControlStyles.DoubleBuffer, true);
-            SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-            SetStyle(ControlStyles.UserPaint, true);
+            // Enable double buffering for the diagramPanel
+            typeof(Panel).InvokeMember("DoubleBuffered",
+                BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic,
+                null, renderPanel, new object[] { true });
 
+            // Initial render info
             currentRenderInfo.ViewWidth = viewWidth;
             currentRenderInfo.ViewHeight = viewHeight;
             currentRenderInfo.ViewDistance = viewDistance;
@@ -53,26 +47,10 @@ namespace VirtualRubiksCube
             currentRenderInfo.FrontFaceColor = settingDialog.FrontFaceColor;
             currentRenderInfo.BackFaceColor = settingDialog.BackFaceColor;
 
-            ResetCube();
-
-            this.MouseWheel += MainForm_MouseWheel;
-        }
-
-        // Methods
-        #region Form
-        private void MainForm_Load(object sender, EventArgs e)
-        {
-            viewComboBox.SelectedIndex = 0;
-        }
-
-        private void ResetCube()
-        {
-            if (renderer != null)
-                renderer.Abort();
-
+            // Initialize the cube
             rubiksCube = new RubiksCube(100);
 
-            RotationInfo rotationInfo = new RotationInfo();
+            RotationInfo rotationInfo = new();
             rotationInfo.IsRotating = false;
             rotationInfo.AnimationTime = settingDialog.AnimationTime;
             controller = new RubiksCubeController(rubiksCube, rotationInfo);
@@ -90,64 +68,77 @@ namespace VirtualRubiksCube
             renderer.OnRender += new RubiksCubeRenderer.RenderHandler(RenderCube);
 
             renderer.Start();
-        }
 
-        private void MainForm_Paint(object sender, PaintEventArgs e)
+            // Register event handler
+            renderPanel.MouseWheel += renderPanel_MouseWheel;
+        }
+        #endregion
+
+        #region Methods
+        // Form event handlers
+        private void MainForm_Load(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning)
-                return;
-
-            if (isRotating)
-            {
-                statusLabel.Text = "Status: Rotating";
-                Cursor = Cursors.WaitCursor;
-            }
-            else
-            {
-                Cursor = Cursors.Default;
-                statusLabel.Text = "Status: Ready";
-            }
-
-            rotationLabel.Text = "Rotation: x = " + currentRenderInfo.RotationX.ToString("F2") + "°; y = " + currentRenderInfo.RotationY.ToString("F2") + "°; z = " + currentRenderInfo.RotationZ.ToString("F2") + "°";
-            if (mouseHoveredFace != null)
-                faceLabel.Text = "Face: " + mouseHoveredFace.CurrentFace.ToString();
-            else
-                faceLabel.Text = "Face: ";
-
-            mouseHoveredFace = renderer.Render(e.Graphics, currentRenderInfo);
+            viewComboBox.SelectedIndex = 0;
         }
 
-        // on render thread
+        private void ResetCube()
+        {
+            try
+            {
+                renderer?.Abort();
+
+                rubiksCube = new RubiksCube(100);
+
+                RotationInfo rotationInfo = new();
+                rotationInfo.IsRotating = false;
+                rotationInfo.AnimationTime = settingDialog.AnimationTime;
+                controller = new RubiksCubeController(rubiksCube, rotationInfo);
+                controller.RotationStarted += new RubiksCubeController.RotationStartedHandler(OnRotationStarted);
+                controller.RotationFinished += new RubiksCubeController.RotationFinishedHandler(OnRotationFinished);
+                moveQueueBindingSource.DataSource = controller.MoveQueue;
+                moveQueueListBox.DataSource = moveQueueBindingSource;
+
+                currentRenderInfo.RotationX = defaultRotationX;
+                currentRenderInfo.RotationY = defaultRotationY;
+                currentRenderInfo.RotationZ = defaultRotationZ;
+                currentRenderInfo.ImageDistance = defaultImageDistance;
+
+                renderer = new RubiksCubeRenderer(rubiksCube, currentRenderInfo);
+                renderer.OnRender += RenderCube;
+
+                renderer.Start();
+            }
+            catch { }
+        }
+
+        // pass info to render thread
         public void RenderCube(object sender, RenderEventArgs e)
         {
             currentRenderInfo = e.RenderInfo;
 
-            Invalidate();
+            renderPanel.Invalidate();
         }
 
-        // on animate thread
+        // pass info to render thread
         private void OnRotationStarted(object sender)
         {
             isRotating = true;
         }
 
-        // on animate thread
+        // pass info to render thread
         private void OnRotationFinished(object sender)
         {
-            if (moveQueueListBox.DataSource == null)
-                moveQueueListBox.DataSource = moveQueueBindingSource;
+            moveQueueListBox.DataSource ??= moveQueueBindingSource;
 
             isRotating = false;
         }
 
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            if (renderer != null)
-                renderer.Abort();
+            Application.Exit();
         }
-        #endregion
 
-        #region Menu
+        // Menu
         private void resetToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (MessageBox.Show(this, "Do you want to reset the Rubik's cube?", "Virtual Rubik's Cube", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question) == DialogResult.Yes)
@@ -156,34 +147,34 @@ namespace VirtualRubiksCube
 
         private void scrambleToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ScrambleDialog scrambleDialog = new ScrambleDialog();
+            ScrambleDialog scrambleDialog = new();
             scrambleDialog.ShowDialog(this);
             if (scrambleDialog.DialogResult == DialogResult.OK)
             {
                 int numberOfMoves = scrambleDialog.NumberOfMoves;
-                List<Move> randomMoves = new List<Move>();
-                Random random = new Random();
+                List<Move> randomMoves = new();
+                Random random = new();
                 if (scrambleDialog.IncludeMiddleLayerRotation)
                 {
-                    List<Move> moves = new List<Move>();
-                    moves.Add(new Move(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.MiddleY, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.MiddleY, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.MiddleX, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.MiddleX, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.MiddleZ, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.MiddleZ, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    List<Move> moves = new();
+                    moves.Add(new(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.MiddleY, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.MiddleY, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.MiddleX, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.MiddleX, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.MiddleZ, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.MiddleZ, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Counterclockwise));
 
 
                     for (int i = 0; i < numberOfMoves; i++)
@@ -194,19 +185,19 @@ namespace VirtualRubiksCube
                 }
                 else
                 {
-                    List<Move> moves = new List<Move>();
-                    moves.Add(new Move(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Counterclockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Clockwise));
-                    moves.Add(new Move(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    List<Move> moves = new();
+                    moves.Add(new(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Counterclockwise));
+                    moves.Add(new(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Clockwise));
+                    moves.Add(new(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Counterclockwise));
 
 
                     for (int i = 0; i < numberOfMoves; i++)
@@ -258,13 +249,38 @@ namespace VirtualRubiksCube
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AboutBox aboutBox = new AboutBox();
+            AboutBox aboutBox = new();
             aboutBox.ShowDialog(this);
         }
-        #endregion
 
-        #region Mouse
-        private void MainForm_MouseWheel(object sender, MouseEventArgs e)
+        // Render
+        private void renderPanel_Paint(object sender, PaintEventArgs e)
+        {
+            if (!renderer.IsRunning)
+                return;
+
+            if (isRotating)
+            {
+                statusLabel.Text = "Status: Rotating";
+                Cursor = Cursors.WaitCursor;
+            }
+            else
+            {
+                Cursor = Cursors.Default;
+                statusLabel.Text = "Status: Ready";
+            }
+
+            rotationLabel.Text = "Rotation: x = " + currentRenderInfo.RotationX.ToString("F2") + "°; y = " + currentRenderInfo.RotationY.ToString("F2") + "°; z = " + currentRenderInfo.RotationZ.ToString("F2") + "°";
+            if (mouseHoveredFace != null)
+                faceLabel.Text = "Face: " + mouseHoveredFace.CurrentFace.ToString();
+            else
+                faceLabel.Text = "Face: ";
+
+            mouseHoveredFace = renderer.RenderFaces(e.Graphics, currentRenderInfo);
+        }
+
+        // Mouse control
+        private void renderPanel_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (!renderer.IsRunning || e.X < 0 || e.X > currentRenderInfo.ViewWidth || e.Y < 0 || e.Y > currentRenderInfo.ViewHeight)
                 return;
@@ -283,7 +299,7 @@ namespace VirtualRubiksCube
             renderer.SetRenderInfo(newRenderInfo);
         }
 
-        private void MainForm_MouseMove(object sender, MouseEventArgs e)
+        private void renderPanel_MouseMove(object sender, MouseEventArgs e)
         {
             if (!renderer.IsRunning || e.X < 0 || e.X > currentRenderInfo.ViewWidth || e.Y < 0 || e.Y > currentRenderInfo.ViewHeight)
             {
@@ -326,7 +342,7 @@ namespace VirtualRubiksCube
             oldMousePosition = e.Location;
         }
 
-        private void MainForm_MouseClick(object sender, MouseEventArgs e)
+        private void renderPanel_MouseClick(object sender, MouseEventArgs e)
         {
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating || e.Button != MouseButtons.Left || mouseHoveredFace == null || e.X < 0 || e.X > 600 || e.Y < 0 || e.Y > 500)
                 return;
@@ -341,15 +357,18 @@ namespace VirtualRubiksCube
             }
             else if (mouseHoveredFace.SelectionStatus == Face3D.SelectionMode.Selected)
             {
-                DeselectFace(selectedFace);
+                if (selectedFace != null)
+                    DeselectFace(selectedFace);
                 selectedFace = null;
             }
             else if (mouseHoveredFace.SelectionStatus == Face3D.SelectionMode.SecondarySelection)
             {
-                DeselectFace(selectedFace);
-                ExecuteSelection(selectedFace, mouseHoveredFace);
+                if (selectedFace != null)
+                {
+                    DeselectFace(selectedFace);
+                    ExecuteSelection(selectedFace, mouseHoveredFace);
+                }
                 selectedFace = null;
-
             }
         }
 
@@ -425,8 +444,6 @@ namespace VirtualRubiksCube
 
         public void ExecuteSelection(Face3D firstFace, Face3D secondFace)
         {
-            RubiksCube.Layer layer = RubiksCube.Layer.None;
-            Move.RotationType rotationType = VirtualRubiksCube.Move.RotationType.Clockwise;
             sbyte firstX = firstFace.Cubelet.CurrentPosition.Item1;
             sbyte firstY = firstFace.Cubelet.CurrentPosition.Item2;
             sbyte firstZ = firstFace.Cubelet.CurrentPosition.Item3;
@@ -434,8 +451,10 @@ namespace VirtualRubiksCube
             sbyte secondY = secondFace.Cubelet.CurrentPosition.Item2;
             sbyte secondZ = secondFace.Cubelet.CurrentPosition.Item3;
 
+            RubiksCube.Layer layer;
+            Move.RotationType rotationType;
             // Front face
-            if (firstFace.CurrentFace == RubiksCube.Face.Front) 
+            if (firstFace.CurrentFace == RubiksCube.Face.Front)
             {
                 if (firstX == -1 && secondX == -1) // left
                 {
@@ -492,7 +511,7 @@ namespace VirtualRubiksCube
                         rotationType = VirtualRubiksCube.Move.RotationType.Counterclockwise;
                 }
 
-                Move move = new Move(layer, rotationType);
+                Move move = new(layer, rotationType);
                 controller.StartRotation(move);
                 return;
             }
@@ -555,7 +574,7 @@ namespace VirtualRubiksCube
                         rotationType = VirtualRubiksCube.Move.RotationType.Clockwise;
                 }
 
-                Move move = new Move(layer, rotationType);
+                Move move = new(layer, rotationType);
                 controller.StartRotation(move);
                 return;
             }
@@ -618,7 +637,7 @@ namespace VirtualRubiksCube
                         rotationType = VirtualRubiksCube.Move.RotationType.Clockwise;
                 }
 
-                Move move = new Move(layer, rotationType);
+                Move move = new(layer, rotationType);
                 controller.StartRotation(move);
                 return;
             }
@@ -681,7 +700,7 @@ namespace VirtualRubiksCube
                         rotationType = VirtualRubiksCube.Move.RotationType.Counterclockwise;
                 }
 
-                Move move = new Move(layer, rotationType);
+                Move move = new(layer, rotationType);
                 controller.StartRotation(move);
                 return;
             }
@@ -744,7 +763,7 @@ namespace VirtualRubiksCube
                         rotationType = VirtualRubiksCube.Move.RotationType.Clockwise;
                 }
 
-                Move move = new Move(layer, rotationType);
+                Move move = new(layer, rotationType);
                 controller.StartRotation(move);
                 return;
             }
@@ -807,14 +826,13 @@ namespace VirtualRubiksCube
                         rotationType = VirtualRubiksCube.Move.RotationType.Counterclockwise;
                 }
 
-                Move move = new Move(layer, rotationType);
+                Move move = new(layer, rotationType);
                 controller.StartRotation(move);
                 return;
             }
         }
-        #endregion
 
-        #region Keyboard
+        // Keyboard control
         private void MainForm_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Modifiers == Keys.Shift)
@@ -860,9 +878,16 @@ namespace VirtualRubiksCube
                     bButton_Click(bButton, EventArgs.Empty);
             }
         }
-        #endregion
 
-        #region View
+        // View
+        private void viewComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (viewComboBox.Items.Count == 0)
+                return;
+
+            showViewButton_Click(showViewButton, EventArgs.Empty);
+        }
+
         private void showViewButton_Click(object sender, EventArgs e)
         {
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
@@ -907,18 +932,16 @@ namespace VirtualRubiksCube
                     break;
             }
 
-
             renderer.SetRenderInfo(currentRenderInfo);
         }
-        #endregion
 
-        #region Move and move queue
+        // Moves and Queue
         private void uButton_Click(object sender, EventArgs e)
         {
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Clockwise);
+            Move newMove = new(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Clockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -936,7 +959,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Counterclockwise);
+            Move newMove = new(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Counterclockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -954,7 +977,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.MiddleY, VirtualRubiksCube.Move.RotationType.Clockwise);
+            Move newMove = new(RubiksCube.Layer.MiddleY, VirtualRubiksCube.Move.RotationType.Clockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -972,7 +995,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.MiddleY, VirtualRubiksCube.Move.RotationType.Counterclockwise);
+            Move newMove = new(RubiksCube.Layer.MiddleY, VirtualRubiksCube.Move.RotationType.Counterclockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -990,7 +1013,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Clockwise);
+            Move newMove = new(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Clockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1008,7 +1031,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Counterclockwise);
+            Move newMove = new(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Counterclockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1026,7 +1049,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Clockwise);
+            Move newMove = new(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Clockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1044,7 +1067,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Counterclockwise);
+            Move newMove = new(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Counterclockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1062,7 +1085,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.MiddleX, VirtualRubiksCube.Move.RotationType.Clockwise);
+            Move newMove = new(RubiksCube.Layer.MiddleX, VirtualRubiksCube.Move.RotationType.Clockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1080,7 +1103,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.MiddleX, VirtualRubiksCube.Move.RotationType.Counterclockwise);
+            Move newMove = new(RubiksCube.Layer.MiddleX, VirtualRubiksCube.Move.RotationType.Counterclockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1098,7 +1121,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Clockwise);
+            Move newMove = new(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Clockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1116,7 +1139,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Counterclockwise);
+            Move newMove = new(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Counterclockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1134,7 +1157,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Clockwise);
+            Move newMove = new(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Clockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1152,7 +1175,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Counterclockwise);
+            Move newMove = new(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Counterclockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1170,7 +1193,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.MiddleZ, VirtualRubiksCube.Move.RotationType.Clockwise);
+            Move newMove = new(RubiksCube.Layer.MiddleZ, VirtualRubiksCube.Move.RotationType.Clockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1188,7 +1211,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.MiddleZ, VirtualRubiksCube.Move.RotationType.Counterclockwise);
+            Move newMove = new(RubiksCube.Layer.MiddleZ, VirtualRubiksCube.Move.RotationType.Counterclockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1206,7 +1229,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Clockwise);
+            Move newMove = new(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Clockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);
@@ -1224,7 +1247,7 @@ namespace VirtualRubiksCube
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
-            Move newMove = new Move(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Counterclockwise);
+            Move newMove = new(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Counterclockwise);
             if (rotateRadioButton.Checked)
             {
                 controller.StartRotation(newMove);

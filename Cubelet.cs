@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace VirtualRubiksCube
+﻿namespace VirtualRubiksCube
 {
     public class Cubelet
     {
-        // Fields
+        #region Fields
         private Point3D[] vertices = new Point3D[8];
         private Face3D[] faces = new Face3D[6];
-        private Dictionary<byte, Face3D.SelectionMode> facesSelectionMode = new Dictionary<byte, Face3D.SelectionMode>();
-        private Dictionary<byte, RubiksCube.Face> currentFaces = new Dictionary<byte, RubiksCube.Face>();
+        private Dictionary<byte, Face3D.SelectionMode> facesSelectionMode = new();
+        private Dictionary<byte, RubiksCube.Face> currentFaces = new();
+        #endregion
 
-        // Properties
+        #region Properties
         public RubiksCube RubiksCube { get; private set; }
         public byte Size { get; private set; }
         public Point3D[] Vertices { get { return vertices; } }
@@ -63,32 +57,34 @@ namespace VirtualRubiksCube
             }
         }
         public Dictionary<byte, RubiksCube.Face> CurrentFaces { get { return currentFaces; } }
-        public Tuple<sbyte, sbyte, sbyte> OriginalPosition { get; private set; }
-        public Tuple<sbyte, sbyte, sbyte> CurrentPosition { get; set; }
+        public (sbyte, sbyte, sbyte) OriginalPosition { get; private set; }
+        public (sbyte, sbyte, sbyte) CurrentPosition { get; set; }
         public RubiksCube.Layer OriginalLayers
         {
             get
             {
+                (sbyte x, sbyte y, sbyte z) = OriginalPosition;
+
                 RubiksCube.Layer yLayer;
-                if (OriginalPosition.Item2 == -1)
+                if (y == -1)
                     yLayer = RubiksCube.Layer.Up;
-                else if (OriginalPosition.Item2 == 0)
+                else if (y == 0)
                     yLayer = RubiksCube.Layer.MiddleY;
                 else
                     yLayer = RubiksCube.Layer.Down;
 
                 RubiksCube.Layer xLayer;
-                if (OriginalPosition.Item1 == 1)
+                if (x == 1)
                     xLayer = RubiksCube.Layer.Right;
-                else if (OriginalPosition.Item1 == 0)
+                else if (x == 0)
                     xLayer = RubiksCube.Layer.MiddleX;
                 else
                     xLayer = RubiksCube.Layer.Left;
 
                 RubiksCube.Layer zLayer;
-                if (OriginalPosition.Item3 == 1)
+                if (z == 1)
                     zLayer = RubiksCube.Layer.Front;
-                else if (OriginalPosition.Item3 == 0)
+                else if (z == 0)
                     zLayer = RubiksCube.Layer.MiddleZ;
                 else
                     zLayer = RubiksCube.Layer.Back;
@@ -100,26 +96,28 @@ namespace VirtualRubiksCube
         {
             get
             {
+                (sbyte x, sbyte y, sbyte z) = CurrentPosition;
+
                 RubiksCube.Layer yLayer;
-                if (CurrentPosition.Item2 == -1)
+                if (y == -1)
                     yLayer = RubiksCube.Layer.Up;
-                else if (CurrentPosition.Item2 == 0)
+                else if (y == 0)
                     yLayer = RubiksCube.Layer.MiddleY;
                 else
                     yLayer = RubiksCube.Layer.Down;
 
                 RubiksCube.Layer xLayer;
-                if (CurrentPosition.Item1 == 1)
+                if (x == 1)
                     xLayer = RubiksCube.Layer.Right;
-                else if (CurrentPosition.Item1 == 0)
+                else if (x == 0)
                     xLayer = RubiksCube.Layer.MiddleX;
                 else
                     xLayer = RubiksCube.Layer.Left;
 
                 RubiksCube.Layer zLayer;
-                if (CurrentPosition.Item3 == 1)
+                if (z == 1)
                     zLayer = RubiksCube.Layer.Front;
-                else if (CurrentPosition.Item3 == 0)
+                else if (z == 0)
                     zLayer = RubiksCube.Layer.MiddleZ;
                 else
                     zLayer = RubiksCube.Layer.Back;
@@ -131,9 +129,8 @@ namespace VirtualRubiksCube
         {
             get
             {
-                sbyte x = CurrentPosition.Item1;
-                sbyte y = CurrentPosition.Item2;
-                sbyte z = CurrentPosition.Item3;
+                (sbyte x, sbyte y, sbyte z) = CurrentPosition;
+
                 return (x == 0 && y == 0 && z == -1) ||
                     (x == 0 && y == 0 && z == 1) ||
                     (x == 0 && y == -1 && z == 0) ||
@@ -146,9 +143,8 @@ namespace VirtualRubiksCube
         {
             get
             {
-                sbyte x = CurrentPosition.Item1;
-                sbyte y = CurrentPosition.Item2;
-                sbyte z = CurrentPosition.Item3;
+                (sbyte x, sbyte y, sbyte z) = CurrentPosition;
+
                 return (x == -1 && y == -1 && z == -1) ||
                     (x == -1 && y == -1 && z == 1) ||
                     (x == -1 && y == 1 && z == -1) ||
@@ -166,15 +162,16 @@ namespace VirtualRubiksCube
                 return !(IsCenter || IsCorner);
             }
         }
+        #endregion
 
-        // Constructor
+        #region Constructor
         public Cubelet(RubiksCube rubiksCube, byte size, sbyte xPosition, sbyte yPosition, sbyte zPosition)
         {
             RubiksCube = rubiksCube;
             Size = size;
 
-            OriginalPosition = new Tuple<sbyte, sbyte, sbyte>(xPosition, yPosition, zPosition);
-            CurrentPosition = new Tuple<sbyte, sbyte, sbyte>(xPosition, yPosition, zPosition);
+            OriginalPosition = (xPosition, yPosition, zPosition);
+            CurrentPosition = (xPosition, yPosition, zPosition);
 
             vertices[0] = new Point3D(-0.5 * size + xPosition * size, -0.5 * size + yPosition * size, -0.5 * size + zPosition * size);
             vertices[1] = new Point3D(0.5 * size + xPosition * size, -0.5 * size + yPosition * size, -0.5 * size + zPosition * size);
@@ -199,8 +196,9 @@ namespace VirtualRubiksCube
             currentFaces.Add(4, RubiksCube.Face.Front);
             currentFaces.Add(5, RubiksCube.Face.Back);
         }
+        #endregion
 
-        // Methods
+        #region Methods
         public void SetSelectionMode(byte cubeletFaceIndex, Face3D.SelectionMode selectionMode)
         {
             facesSelectionMode[cubeletFaceIndex] = selectionMode;
@@ -231,5 +229,6 @@ namespace VirtualRubiksCube
 
             return faces[faceIndex];
         }
+        #endregion
     }
 }
