@@ -77,8 +77,11 @@ namespace VirtualRubiksCube
                 IsRunning = false;
                 isTerminating = true;
                 cancellationTokenSource?.Cancel();
-                renderTask?.Wait();
                 Thread.Sleep(500);
+                if (renderTask?.IsCanceled == false)
+                {
+                    renderTask?.Wait();
+                }
             }
         }
 
