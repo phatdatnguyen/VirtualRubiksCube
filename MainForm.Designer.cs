@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             groupBox1 = new GroupBox();
             moveQueueListBox = new ListBox();
             zPrimeButton = new Button();
@@ -615,6 +616,7 @@
             Controls.Add(groupBox1);
             Controls.Add(menuStrip);
             FormBorderStyle = FormBorderStyle.FixedSingle;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             KeyPreview = true;
             MainMenuStrip = menuStrip;
             Margin = new Padding(4, 3, 4, 3);
