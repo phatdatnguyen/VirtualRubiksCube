@@ -7,7 +7,7 @@
         private List<RubiksCubeState> states = new();
         private List<Move> executedMoves = new();
         private List<Move> moveQueue = new();
-        private RotationInfo currentRotationInfo; // shared with animation thread
+        private RotationInfo currentRotationInfo;
         private List<Cubelet> currentRotatingLayer = new();
         private Dictionary<Cubelet, Point3D[]>? targetCubeletsPosition;
         #endregion
@@ -16,6 +16,7 @@
         public RubiksCube RubiksCube { get; private set; }
         public RotationInfo CurrentRotationInfo { get { return currentRotationInfo; } }
         public List<Move> MoveQueue { get { return moveQueue; } }
+        public IReadOnlyList<Cubelet> CurrentRotatingLayer { get { return currentRotatingLayer; } }
         #endregion
 
         #region Events
@@ -42,7 +43,6 @@
         #endregion
 
         #region Methods
-        // on render thread
         public void RotateStep()
         {
             if (currentRotationInfo.CurrentStep < currentRotationInfo.NumberOfSteps)
@@ -69,7 +69,7 @@
 
                 currentRotationInfo.CurrentStep += 1;
             }
-            else // last rotation step
+            else
             {
                 foreach (Cubelet cubelet in currentRotatingLayer)
                     for (int i = 0; i < cubelet.Vertices.Length; i++)
@@ -90,7 +90,6 @@
                     }
 
                     currentRotationInfo.IsRotating = false;
-                    // Raise the event
                     RotationFinished?.Invoke(this);
                 }
             }
@@ -144,10 +143,10 @@
             states.Add(currentState);
             executedMoves.Add(move);
 
-            if (RubiksCube.Renderer != null)
-                currentRotationInfo.RotationStep = currentRotationInfo.TargetAngle / ((double)(currentRotationInfo.AnimationTime / 1000.0) * RubiksCube.Renderer.FrameRate);
+            double frameRate = 60.0;
+            currentRotationInfo.RotationStep = currentRotationInfo.TargetAngle / ((currentRotationInfo.AnimationTime / 1000.0) * frameRate);
             targetCubeletsPosition = GetTargetVertices();
-            currentRotationInfo.IsRotating = true; // Rotation info will be sent to animation thread of the renderer.
+            currentRotationInfo.IsRotating = true;
 
             if (!currentRotationInfo.IsExecutingMoveQueue ||
                 (currentRotationInfo.IsExecutingMoveQueue && move == moveQueue[0]))
@@ -267,7 +266,7 @@
 
                 targetCubeletsPosition.Add(cubelet, targetVertices);
             }
-                
+
             return targetCubeletsPosition;
         }
 
@@ -288,7 +287,7 @@
                 RubiksCubeState newState = currentState.Clone();
                 int targetAngle = move.TargetAngle;
 
-                List<Cubelet> currentRotatingLayer = new();
+                List<Cubelet> rotatingLayer = new();
                 foreach (KeyValuePair<Cubelet, (sbyte, sbyte, sbyte)> cubeletPosition in currentState.CubeletsPosition)
                 {
                     Cubelet cubelet = cubeletPosition.Key;
@@ -318,7 +317,7 @@
                         for (byte i = 0; i < 6; i++)
                             cubelet.CurrentFaces[i] = RotateFace(cubelet.CurrentFaces[i], move);
 
-                        currentRotatingLayer.Add(cubelet);
+                        rotatingLayer.Add(cubelet);
                     }
 
                     cubelet.CurrentPosition = (newX, newY, newZ);
@@ -329,23 +328,15 @@
                 states.Add(currentState);
                 executedMoves.Add(move);
 
-                double xAngle = 0;
-                double yAngle = 0;
-                double zAngle = 0;
+                double xAngle = 0, yAngle = 0, zAngle = 0;
                 switch (move.Axis)
                 {
-                    case RubiksCube.Axis.X:
-                        xAngle = targetAngle;
-                        break;
-                    case RubiksCube.Axis.Y:
-                        yAngle = targetAngle;
-                        break;
-                    case RubiksCube.Axis.Z:
-                        zAngle = targetAngle;
-                        break;
+                    case RubiksCube.Axis.X: xAngle = targetAngle; break;
+                    case RubiksCube.Axis.Y: yAngle = targetAngle; break;
+                    case RubiksCube.Axis.Z: zAngle = targetAngle; break;
                 }
 
-                foreach (Cubelet cubelet in currentRotatingLayer)
+                foreach (Cubelet cubelet in rotatingLayer)
                     for (int i = 0; i < cubelet.Vertices.Length; i++)
                         cubelet.Vertices[i] = cubelet.Vertices[i].Rotate(xAngle, yAngle, zAngle);
             }

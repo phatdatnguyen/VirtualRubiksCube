@@ -37,6 +37,15 @@
         public int NumberOfSteps { get; private set; }
         public int CurrentStep { get; set; }
         public int CurrentMoveIndex { get; set; }
+        public double CurrentAngle
+        {
+            get
+            {
+                double angle = rotationStep * CurrentStep;
+                if (TargetAngle > 0) return Math.Min(angle, TargetAngle);
+                return Math.Max(angle, TargetAngle);
+            }
+        }
         #endregion
     }
 }

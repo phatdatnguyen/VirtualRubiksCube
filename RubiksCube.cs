@@ -4,7 +4,6 @@
     {
         #region Fields
         private List<Cubelet> cubelets = new();
-        private List<Face3D> faces = new();
         #endregion
 
         #region Enumerations
@@ -33,12 +32,14 @@
         {
             get
             {
-                faces = new List<Face3D>();
+                // Rebuild every access. Cubelet.Faces[] is rebuilt with fresh Point3D references each call —
+                // necessary because RubiksCubeController.RotateStep replaces cubelet.Vertices[i] with new
+                // Point3D instances during animation, so any cached Face3D would hold stale references.
+                List<Face3D> result = new(cubelets.Count * 6);
                 foreach (var cubelet in cubelets)
                     foreach (var face in cubelet.Faces)
-                        faces.Add(face);
-
-                return faces;
+                        result.Add(face);
+                return result;
             }
         }
         public RubiksCubeRenderer? Renderer { get; set; }

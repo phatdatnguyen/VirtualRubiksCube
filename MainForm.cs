@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-namespace VirtualRubiksCube
+﻿namespace VirtualRubiksCube
 {
     public partial class MainForm : Form
     {
@@ -8,10 +6,10 @@ namespace VirtualRubiksCube
         private RubiksCube rubiksCube;
         private RubiksCubeController controller;
         private RubiksCubeRenderer renderer;
+        private System.Windows.Forms.Timer renderTimer;
+        private bool glReady;
 
         private RenderInfo currentRenderInfo = new();
-        private int viewWidth = 600;
-        private int viewHeight = 500;
         private int defaultImageDistance = 80;
         private int viewDistance = 100;
         private double defaultRotationX = -10;
@@ -31,14 +29,9 @@ namespace VirtualRubiksCube
         {
             InitializeComponent();
 
-            // Enable double buffering for the diagramPanel
-            typeof(Panel).InvokeMember("DoubleBuffered",
-                BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic,
-                null, renderPanel, new object[] { true });
-
             // Initial render info
-            currentRenderInfo.ViewWidth = viewWidth;
-            currentRenderInfo.ViewHeight = viewHeight;
+            currentRenderInfo.ViewWidth = renderPanel.ClientSize.Width;
+            currentRenderInfo.ViewHeight = renderPanel.ClientSize.Height;
             currentRenderInfo.ViewDistance = viewDistance;
             currentRenderInfo.TopFaceColor = settingDialog.TopFaceColor;
             currentRenderInfo.BottomFaceColor = settingDialog.BottomFaceColor;
@@ -64,12 +57,11 @@ namespace VirtualRubiksCube
             currentRenderInfo.RotationZ = defaultRotationZ;
             currentRenderInfo.ImageDistance = defaultImageDistance;
 
-            renderer = new RubiksCubeRenderer(rubiksCube, currentRenderInfo);
-            renderer.OnRender += new RubiksCubeRenderer.RenderHandler(RenderCube);
+            renderer = new RubiksCubeRenderer(rubiksCube, renderPanel, currentRenderInfo);
 
-            renderer.Start();
+            renderTimer = new System.Windows.Forms.Timer { Interval = 16 };
+            renderTimer.Tick += RenderTimer_Tick;
 
-            // Register event handler
             renderPanel.MouseWheel += renderPanel_MouseWheel;
         }
         #endregion
@@ -81,56 +73,90 @@ namespace VirtualRubiksCube
             viewComboBox.SelectedIndex = 0;
         }
 
-        private void ResetCube()
+        private void renderPanel_Load(object? sender, EventArgs e)
         {
             try
             {
-                renderer?.Abort();
-
-                rubiksCube = new RubiksCube(100);
-
-                RotationInfo rotationInfo = new();
-                rotationInfo.IsRotating = false;
-                rotationInfo.AnimationTime = settingDialog.AnimationTime;
-                controller = new RubiksCubeController(rubiksCube, rotationInfo);
-                controller.RotationStarted += new RubiksCubeController.RotationStartedHandler(OnRotationStarted);
-                controller.RotationFinished += new RubiksCubeController.RotationFinishedHandler(OnRotationFinished);
-                moveQueueBindingSource.DataSource = controller.MoveQueue;
-                moveQueueListBox.DataSource = moveQueueBindingSource;
-
-                currentRenderInfo.RotationX = defaultRotationX;
-                currentRenderInfo.RotationY = defaultRotationY;
-                currentRenderInfo.RotationZ = defaultRotationZ;
-                currentRenderInfo.ImageDistance = defaultImageDistance;
-
-                renderer = new RubiksCubeRenderer(rubiksCube, currentRenderInfo);
-                renderer.OnRender += RenderCube;
-
-                renderer.Start();
+                renderer.Initialize();
+                glReady = true;
+                currentRenderInfo.ViewWidth = renderPanel.ClientSize.Width;
+                currentRenderInfo.ViewHeight = renderPanel.ClientSize.Height;
+                renderTimer.Start();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this,
+                    "Failed to initialize OpenGL renderer:\n" + ex.Message,
+                    "Virtual Rubik's Cube", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
-        // pass info to render thread
-        public void RenderCube(object sender, RenderEventArgs e)
+        private void renderPanel_Resize(object? sender, EventArgs e)
         {
-            currentRenderInfo = e.RenderInfo;
+            currentRenderInfo.ViewWidth = renderPanel.ClientSize.Width;
+            currentRenderInfo.ViewHeight = renderPanel.ClientSize.Height;
+            renderPanel.Invalidate();
+        }
+
+        private void RenderTimer_Tick(object? sender, EventArgs e)
+        {
+            if (!glReady) return;
+
+            if (controller.CurrentRotationInfo.IsRotating)
+                controller.RotateStep();
 
             renderPanel.Invalidate();
         }
 
-        // pass info to render thread
+        private void ResetCube()
+        {
+            renderTimer.Stop();
+            try { renderer?.Dispose(); } catch { }
+
+            rubiksCube = new RubiksCube(100);
+
+            RotationInfo rotationInfo = new();
+            rotationInfo.IsRotating = false;
+            rotationInfo.AnimationTime = settingDialog.AnimationTime;
+            controller = new RubiksCubeController(rubiksCube, rotationInfo);
+            controller.RotationStarted += new RubiksCubeController.RotationStartedHandler(OnRotationStarted);
+            controller.RotationFinished += new RubiksCubeController.RotationFinishedHandler(OnRotationFinished);
+            moveQueueBindingSource.DataSource = controller.MoveQueue;
+            moveQueueListBox.DataSource = moveQueueBindingSource;
+
+            currentRenderInfo.RotationX = defaultRotationX;
+            currentRenderInfo.RotationY = defaultRotationY;
+            currentRenderInfo.RotationZ = defaultRotationZ;
+            currentRenderInfo.ImageDistance = defaultImageDistance;
+
+            renderer = new RubiksCubeRenderer(rubiksCube, renderPanel, currentRenderInfo);
+            try
+            {
+                renderer.Initialize();
+                glReady = true;
+                renderTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                glReady = false;
+                MessageBox.Show(this,
+                    "Failed to reinitialize OpenGL renderer:\n" + ex.Message,
+                    "Virtual Rubik's Cube", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void OnRotationStarted(object sender)
         {
             isRotating = true;
+            Cursor = Cursors.WaitCursor;
         }
 
-        // pass info to render thread
         private void OnRotationFinished(object sender)
         {
             moveQueueListBox.DataSource ??= moveQueueBindingSource;
 
             isRotating = false;
+            Cursor = Cursors.Default;
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -256,19 +282,9 @@ namespace VirtualRubiksCube
         // Render
         private void renderPanel_Paint(object sender, PaintEventArgs e)
         {
-            if (!renderer.IsRunning)
-                return;
+            if (!glReady) return;
 
-            if (isRotating)
-            {
-                statusLabel.Text = "Status: Rotating";
-                Cursor = Cursors.WaitCursor;
-            }
-            else
-            {
-                Cursor = Cursors.Default;
-                statusLabel.Text = "Status: Ready";
-            }
+            statusLabel.Text = isRotating ? "Status: Rotating" : "Status: Ready";
 
             rotationLabel.Text = "Rotation: x = " + currentRenderInfo.RotationX.ToString("F2") + "°; y = " + currentRenderInfo.RotationY.ToString("F2") + "°; z = " + currentRenderInfo.RotationZ.ToString("F2") + "°";
             if (mouseHoveredFace != null)
@@ -276,13 +292,13 @@ namespace VirtualRubiksCube
             else
                 faceLabel.Text = "Face: ";
 
-            mouseHoveredFace = renderer.RenderFaces(e.Graphics, currentRenderInfo);
+            renderer.Render(currentRenderInfo);
         }
 
         // Mouse control
         private void renderPanel_MouseWheel(object? sender, MouseEventArgs e)
         {
-            if (!renderer.IsRunning || e.X < 0 || e.X > currentRenderInfo.ViewWidth || e.Y < 0 || e.Y > currentRenderInfo.ViewHeight)
+            if (!glReady || e.X < 0 || e.X > renderPanel.ClientSize.Width || e.Y < 0 || e.Y > renderPanel.ClientSize.Height)
                 return;
 
             int imageDistance = currentRenderInfo.ImageDistance;
@@ -294,23 +310,23 @@ namespace VirtualRubiksCube
 
             zoomLabel.Text = "Zoom: " + imageDistance.ToString() + "%";
 
-            RenderInfo newRenderInfo = currentRenderInfo;
-            newRenderInfo.ImageDistance = imageDistance;
-            renderer.SetRenderInfo(newRenderInfo);
+            currentRenderInfo.ImageDistance = imageDistance;
+            mouseHoveredFace = renderer.HitTest(e.Location, currentRenderInfo);
         }
 
         private void renderPanel_MouseMove(object sender, MouseEventArgs e)
         {
-            if (!renderer.IsRunning || e.X < 0 || e.X > currentRenderInfo.ViewWidth || e.Y < 0 || e.Y > currentRenderInfo.ViewHeight)
+            if (!glReady || e.X < 0 || e.X > renderPanel.ClientSize.Width || e.Y < 0 || e.Y > renderPanel.ClientSize.Height)
             {
                 oldMousePosition = new Point(-1, -1);
+                mouseHoveredFace = null;
+                renderer.HoveredFace = null;
                 return;
             }
 
             if (oldMousePosition.X != -1 && oldMousePosition.Y != -1)
             {
-                RenderInfo newRenderInfo = currentRenderInfo;
-                newRenderInfo.MousePosition = e.Location;
+                currentRenderInfo.MousePosition = e.Location;
 
                 if (e.Button == MouseButtons.Right || e.Button == MouseButtons.Middle)
                 {
@@ -321,30 +337,31 @@ namespace VirtualRubiksCube
 
                     if (Math.Abs(dX) > Math.Abs(dY))
                     {
-                        newRenderInfo.RotationY = currentRenderInfo.RotationY + dX * 5;
+                        currentRenderInfo.RotationY = currentRenderInfo.RotationY + dX * 5;
                         if (ModifierKeys != Keys.Shift)
-                            newRenderInfo.RotationX = currentRenderInfo.RotationX - dY * 5;
+                            currentRenderInfo.RotationX = currentRenderInfo.RotationX - dY * 5;
                     }
                     else
                     {
-                        newRenderInfo.RotationX = currentRenderInfo.RotationX - dY * 5;
+                        currentRenderInfo.RotationX = currentRenderInfo.RotationX - dY * 5;
                         if (ModifierKeys != Keys.Shift)
-                            newRenderInfo.RotationY = currentRenderInfo.RotationY + dX * 5;
+                            currentRenderInfo.RotationY = currentRenderInfo.RotationY + dX * 5;
                     }
                 }
-                else
+                else if (!isRotating)
                 {
                     Cursor = Cursors.Arrow;
                 }
-
-                renderer.SetRenderInfo(newRenderInfo);
             }
             oldMousePosition = e.Location;
+
+            mouseHoveredFace = renderer.HitTest(e.Location, currentRenderInfo);
+            renderer.HoveredFace = mouseHoveredFace;
         }
 
         private void renderPanel_MouseClick(object sender, MouseEventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating || e.Button != MouseButtons.Left || mouseHoveredFace == null || e.X < 0 || e.X > 600 || e.Y < 0 || e.Y > 500)
+            if (!glReady || controller.CurrentRotationInfo.IsRotating || e.Button != MouseButtons.Left || mouseHoveredFace == null || e.X < 0 || e.X > renderPanel.ClientSize.Width || e.Y < 0 || e.Y > renderPanel.ClientSize.Height)
                 return;
 
             if (mouseHoveredFace.SelectionStatus == Face3D.SelectionMode.None)

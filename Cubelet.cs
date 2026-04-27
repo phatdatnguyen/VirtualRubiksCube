@@ -17,41 +17,23 @@
         {
             get
             {
-                // top face
-                if (OriginalLayers.HasFlag(RubiksCube.Layer.Up))
-                    faces[0] = new Face3D(this, new Point3D[] { vertices[0], vertices[1], vertices[2], vertices[3] }, 0, facesSelectionMode[0], 1);
-                else
-                    faces[0] = new Face3D(this, new Point3D[] { vertices[0], vertices[1], vertices[2], vertices[3] }, 0, facesSelectionMode[0], 0);
+                byte topColor = OriginalLayers.HasFlag(RubiksCube.Layer.Up) ? (byte)1 : (byte)0;
+                faces[0] = new Face3D(this, new Point3D[] { vertices[0], vertices[1], vertices[2], vertices[3] }, 0, topColor);
 
-                // bottom face
-                if (OriginalLayers.HasFlag(RubiksCube.Layer.Down))
-                    faces[1] = new Face3D(this, new Point3D[] { vertices[4], vertices[5], vertices[6], vertices[7] }, 1, facesSelectionMode[1], 2);
-                else
-                    faces[1] = new Face3D(this, new Point3D[] { vertices[4], vertices[5], vertices[6], vertices[7] }, 1, facesSelectionMode[1], 0);
+                byte bottomColor = OriginalLayers.HasFlag(RubiksCube.Layer.Down) ? (byte)2 : (byte)0;
+                faces[1] = new Face3D(this, new Point3D[] { vertices[4], vertices[5], vertices[6], vertices[7] }, 1, bottomColor);
 
-                // left face
-                if (OriginalLayers.HasFlag(RubiksCube.Layer.Left))
-                    faces[2] = new Face3D(this, new Point3D[] { vertices[0], vertices[3], vertices[7], vertices[4] }, 2, facesSelectionMode[2], 3);
-                else
-                    faces[2] = new Face3D(this, new Point3D[] { vertices[0], vertices[3], vertices[7], vertices[4] }, 2, facesSelectionMode[2], 0);
+                byte leftColor = OriginalLayers.HasFlag(RubiksCube.Layer.Left) ? (byte)3 : (byte)0;
+                faces[2] = new Face3D(this, new Point3D[] { vertices[0], vertices[3], vertices[7], vertices[4] }, 2, leftColor);
 
-                // right face
-                if (OriginalLayers.HasFlag(RubiksCube.Layer.Right))
-                    faces[3] = new Face3D(this, new Point3D[] { vertices[1], vertices[2], vertices[6], vertices[5] }, 3, facesSelectionMode[3], 4);
-                else
-                    faces[3] = new Face3D(this, new Point3D[] { vertices[1], vertices[2], vertices[6], vertices[5] }, 3, facesSelectionMode[3], 0);
+                byte rightColor = OriginalLayers.HasFlag(RubiksCube.Layer.Right) ? (byte)4 : (byte)0;
+                faces[3] = new Face3D(this, new Point3D[] { vertices[1], vertices[2], vertices[6], vertices[5] }, 3, rightColor);
 
-                // front face
-                if (OriginalLayers.HasFlag(RubiksCube.Layer.Front))
-                    faces[4] = new Face3D(this, new Point3D[] { vertices[3], vertices[2], vertices[6], vertices[7] }, 4, facesSelectionMode[4], 5);
-                else
-                    faces[4] = new Face3D(this, new Point3D[] { vertices[3], vertices[2], vertices[6], vertices[7] }, 4, facesSelectionMode[4], 0);
+                byte frontColor = OriginalLayers.HasFlag(RubiksCube.Layer.Front) ? (byte)5 : (byte)0;
+                faces[4] = new Face3D(this, new Point3D[] { vertices[3], vertices[2], vertices[6], vertices[7] }, 4, frontColor);
 
-                // back face
-                if (OriginalLayers.HasFlag(RubiksCube.Layer.Back))
-                    faces[5] = new Face3D(this, new Point3D[] { vertices[0], vertices[1], vertices[5], vertices[4] }, 5, facesSelectionMode[5], 6);
-                else
-                    faces[5] = new Face3D(this, new Point3D[] { vertices[0], vertices[1], vertices[5], vertices[4] }, 5, facesSelectionMode[5], 0);
+                byte backColor = OriginalLayers.HasFlag(RubiksCube.Layer.Back) ? (byte)6 : (byte)0;
+                faces[5] = new Face3D(this, new Point3D[] { vertices[0], vertices[1], vertices[5], vertices[4] }, 5, backColor);
 
                 return faces;
             }
@@ -202,6 +184,11 @@
         public void SetSelectionMode(byte cubeletFaceIndex, Face3D.SelectionMode selectionMode)
         {
             facesSelectionMode[cubeletFaceIndex] = selectionMode;
+        }
+
+        public Face3D.SelectionMode GetSelectionMode(byte cubeletFaceIndex)
+        {
+            return facesSelectionMode[cubeletFaceIndex];
         }
 
         public void SetSelectionMode(RubiksCube.Face face, Face3D.SelectionMode selectionMode)

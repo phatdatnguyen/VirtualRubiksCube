@@ -77,7 +77,7 @@
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             menuStrip = new MenuStrip();
-            renderPanel = new Panel();
+            renderPanel = new OpenTK.GLControl.GLControl();
             groupBox1.SuspendLayout();
             statusPanel.SuspendLayout();
             viewGroupBox.SuspendLayout();
@@ -420,16 +420,16 @@
             statusPanel.Controls.Add(zoomLabel);
             statusPanel.Controls.Add(rotationLabel);
             statusPanel.Controls.Add(statusLabel);
-            statusPanel.Location = new Point(14, 620);
+            statusPanel.Location = new Point(14, 596);
             statusPanel.Margin = new Padding(4, 3, 4, 3);
             statusPanel.Name = "statusPanel";
-            statusPanel.Size = new Size(700, 35);
+            statusPanel.Size = new Size(700, 58);
             statusPanel.TabIndex = 0;
             // 
             // faceLabel
             // 
             faceLabel.AutoSize = true;
-            faceLabel.Location = new Point(592, 7);
+            faceLabel.Location = new Point(592, 19);
             faceLabel.Margin = new Padding(4, 0, 4, 0);
             faceLabel.Name = "faceLabel";
             faceLabel.Size = new Size(34, 15);
@@ -439,7 +439,7 @@
             // zoomLabel
             // 
             zoomLabel.AutoSize = true;
-            zoomLabel.Location = new Point(465, 7);
+            zoomLabel.Location = new Point(465, 19);
             zoomLabel.Margin = new Padding(4, 0, 4, 0);
             zoomLabel.Name = "zoomLabel";
             zoomLabel.Size = new Size(67, 15);
@@ -449,10 +449,10 @@
             // rotationLabel
             // 
             rotationLabel.AutoSize = true;
-            rotationLabel.Location = new Point(169, 7);
+            rotationLabel.Location = new Point(169, 19);
             rotationLabel.Margin = new Padding(4, 0, 4, 0);
             rotationLabel.Name = "rotationLabel";
-            rotationLabel.Size = new Size(147, 15);
+            rotationLabel.Size = new Size(146, 15);
             rotationLabel.TabIndex = 0;
             rotationLabel.Text = "Rotation: x = 0; y = 0; z = 0";
             rotationLabel.TextAlign = ContentAlignment.MiddleRight;
@@ -460,7 +460,7 @@
             // statusLabel
             // 
             statusLabel.AutoSize = true;
-            statusLabel.Location = new Point(4, 7);
+            statusLabel.Location = new Point(4, 19);
             statusLabel.Margin = new Padding(4, 0, 4, 0);
             statusLabel.Name = "statusLabel";
             statusLabel.Size = new Size(77, 15);
@@ -587,35 +587,43 @@
             // 
             // menuStrip
             // 
+            menuStrip.ImageScalingSize = new Size(24, 24);
             menuStrip.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, helpToolStripMenuItem });
             menuStrip.Location = new Point(0, 0);
             menuStrip.Name = "menuStrip";
             menuStrip.Padding = new Padding(7, 2, 0, 2);
-            menuStrip.Size = new Size(1148, 24);
+            menuStrip.Size = new Size(1159, 24);
             menuStrip.TabIndex = 0;
             menuStrip.Text = "menuStrip1";
             // 
             // renderPanel
             // 
-            renderPanel.Location = new Point(12, 31);
+            renderPanel.API = OpenTK.Windowing.Common.ContextAPI.OpenGL;
+            renderPanel.APIVersion = new Version(3, 3, 0, 0);
+            renderPanel.Flags = OpenTK.Windowing.Common.ContextFlags.Default;
+            renderPanel.IsEventDriven = true;
+            renderPanel.Location = new Point(72, 78);
             renderPanel.Name = "renderPanel";
-            renderPanel.Size = new Size(702, 583);
+            renderPanel.Profile = OpenTK.Windowing.Common.ContextProfile.Core;
+            renderPanel.SharedContext = null;
+            renderPanel.Size = new Size(560, 480);
             renderPanel.TabIndex = 3;
+            renderPanel.Load += renderPanel_Load;
             renderPanel.Paint += renderPanel_Paint;
             renderPanel.MouseClick += renderPanel_MouseClick;
             renderPanel.MouseMove += renderPanel_MouseMove;
+            renderPanel.Resize += renderPanel_Resize;
             // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1148, 668);
+            ClientSize = new Size(1159, 681);
             Controls.Add(renderPanel);
             Controls.Add(viewGroupBox);
             Controls.Add(statusPanel);
             Controls.Add(groupBox1);
             Controls.Add(menuStrip);
-            FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
             KeyPreview = true;
             MainMenuStrip = menuStrip;
@@ -686,7 +694,7 @@
         private ToolStripMenuItem helpToolStripMenuItem;
         private ToolStripMenuItem aboutToolStripMenuItem;
         private MenuStrip menuStrip;
-        private Panel renderPanel;
+        private OpenTK.GLControl.GLControl renderPanel;
     }
 }
 
