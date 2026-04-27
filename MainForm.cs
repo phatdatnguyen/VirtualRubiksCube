@@ -1304,6 +1304,23 @@
             controller.GetSolutionMoves();
             moveQueueBindingSource.ResetBindings(false);
         }
+
+        private void solveButton_Click(object sender, EventArgs e)
+        {
+            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+                return;
+
+            try
+            {
+                controller.GetSolverMoves();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Solver failed: " + ex.Message, "Solve cube", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            moveQueueBindingSource.ResetBindings(false);
+        }
         #endregion
     }
 }

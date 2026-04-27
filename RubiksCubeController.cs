@@ -365,6 +365,39 @@
             }
         }
 
+        public void GetSolverMoves()
+        {
+            moveQueue.Clear();
+            if (IsSolved(currentState))
+                return;
+
+            try
+            {
+                var facelet = Solver.FaceletCube.FromControllerState(RubiksCube);
+                var solverMoves = Solver.LayerByLayerSolver.Solve(facelet);
+                foreach (var sm in solverMoves)
+                    foreach (var m in sm.ToControllerMoves())
+                        moveQueue.Add(m);
+            }
+            catch
+            {
+                // LBL solver failed for this state. Fall back to history reversal if available.
+                moveQueue.Clear();
+                if (executedMoves.Count == 0) throw;
+                int i = executedMoves.Count - 1;
+                while (i >= 0)
+                {
+                    if (i >= 1 && executedMoves[i].IsCounterMove(executedMoves[i - 1]))
+                    {
+                        i -= 2;
+                        continue;
+                    }
+                    moveQueue.Add(executedMoves[i].GetCounterMove());
+                    i--;
+                }
+            }
+        }
+
         public static bool IsSolved(RubiksCubeState rubiksCubeState)
         {
             bool isSolved = true;

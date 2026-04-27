@@ -40,6 +40,7 @@
             yButton = new Button();
             label1 = new Label();
             setQueueToSolutionButton = new Button();
+            solveButton = new Button();
             clearQueueButton = new Button();
             executeQueueButton = new Button();
             bPrimeButton = new Button();
@@ -95,6 +96,7 @@
             groupBox1.Controls.Add(yButton);
             groupBox1.Controls.Add(label1);
             groupBox1.Controls.Add(setQueueToSolutionButton);
+            groupBox1.Controls.Add(solveButton);
             groupBox1.Controls.Add(clearQueueButton);
             groupBox1.Controls.Add(executeQueueButton);
             groupBox1.Controls.Add(bPrimeButton);
@@ -115,7 +117,7 @@
             groupBox1.Margin = new Padding(4, 3, 4, 3);
             groupBox1.Name = "groupBox1";
             groupBox1.Padding = new Padding(4, 3, 4, 3);
-            groupBox1.Size = new Size(413, 556);
+            groupBox1.Size = new Size(413, 597);
             groupBox1.TabIndex = 2;
             groupBox1.TabStop = false;
             groupBox1.Text = "Moves";
@@ -222,6 +224,18 @@
             setQueueToSolutionButton.Text = "Set queue to solution";
             setQueueToSolutionButton.UseVisualStyleBackColor = true;
             setQueueToSolutionButton.Click += setQueueToSolutionButton_Click;
+            // 
+            // solveButton
+            // 
+            solveButton.Location = new Point(254, 550);
+            solveButton.Margin = new Padding(4, 3, 4, 3);
+            solveButton.Name = "solveButton";
+            solveButton.Size = new Size(152, 27);
+            solveButton.TabIndex = 24;
+            solveButton.Text = "Solve cube";
+            toolTip.SetToolTip(solveButton, "Real layer-by-layer solver");
+            solveButton.UseVisualStyleBackColor = true;
+            solveButton.Click += solveButton_Click;
             // 
             // clearQueueButton
             // 
@@ -592,7 +606,7 @@
             menuStrip.Location = new Point(0, 0);
             menuStrip.Name = "menuStrip";
             menuStrip.Padding = new Padding(7, 2, 0, 2);
-            menuStrip.Size = new Size(1159, 24);
+            menuStrip.Size = new Size(1160, 24);
             menuStrip.TabIndex = 0;
             menuStrip.Text = "menuStrip1";
             // 
@@ -618,7 +632,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1159, 681);
+            ClientSize = new Size(1160, 707);
             Controls.Add(renderPanel);
             Controls.Add(viewGroupBox);
             Controls.Add(statusPanel);
@@ -649,6 +663,7 @@
         #endregion
         private GroupBox groupBox1;
         private Button setQueueToSolutionButton;
+        private Button solveButton;
         private Button clearQueueButton;
         private Button executeQueueButton;
         private Button bPrimeButton;
