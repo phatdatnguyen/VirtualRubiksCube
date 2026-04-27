@@ -77,11 +77,7 @@ namespace VirtualRubiksCube
                 IsRunning = false;
                 isTerminating = true;
                 cancellationTokenSource?.Cancel();
-                Thread.Sleep(500);
-                if (renderTask?.IsCanceled == false)
-                {
-                    renderTask?.Wait();
-                }
+                try { renderTask?.Wait(1000); } catch { }
             }
         }
 
@@ -119,9 +115,9 @@ namespace VirtualRubiksCube
                 // Raise the event
                 OnRender?.Invoke(this, new RenderEventArgs(currentRenderInfo));
 
-                if (stopwatch.ElapsedMilliseconds < 15)
-                    await Task.Delay(Math.Max(15 - (int)stopwatch.ElapsedMilliseconds, 0), cancellationToken);
-                while (stopwatch.Elapsed.TotalMilliseconds < 1000.0 / 60) { }
+                int targetFrameMs = (int)(1000.0 / 60);
+                int delay = Math.Max(targetFrameMs - (int)stopwatch.ElapsedMilliseconds, 1);
+                await Task.Delay(delay, cancellationToken);
 
                 stopwatch.Stop();
 
@@ -136,7 +132,7 @@ namespace VirtualRubiksCube
                     index--;
                 }
                 if (index > 0) frameTimes.RemoveRange(0, index);
-                FrameRate = counter + ((1000 - ms) / frameTimes[0]);
+                FrameRate = frameTimes[0] > 0 ? counter + ((1000 - ms) / frameTimes[0]) : counter;
 
                 // Check for cancellation and exit the loop if requested
                 if (cancellationToken.IsCancellationRequested)
@@ -151,7 +147,7 @@ namespace VirtualRubiksCube
             for (int i = projectedFaces.Count - 1; i >= 0; i--)
             {
                 PointF[] vertices = projectedFaces[i].Vertices.Select(p => new PointF((float)p.X, (float)p.Y)).ToArray();
-                GraphicsPath graphicsPath = new();
+                using GraphicsPath graphicsPath = new();
                 graphicsPath.AddPolygon(vertices);
                 if (graphicsPath.IsVisible(currentRenderInfo.MousePosition))
                 {
@@ -190,19 +186,30 @@ namespace VirtualRubiksCube
                     PointF[] vertices = projectedFace.Vertices.Select(p => new PointF((float)p.X, (float)p.Y)).ToArray();
 
                     if (projectedFace.SelectionStatus == Face3D.SelectionMode.Selected)
-                        graphics.FillPolygon(new HatchBrush(HatchStyle.Percent90, Color.Black, GetFaceColor(projectedFace.ColorIndex)), vertices);
+                    {
+                        using var brush = new HatchBrush(HatchStyle.Percent90, Color.Black, GetFaceColor(projectedFace.ColorIndex));
+                        graphics.FillPolygon(brush, vertices);
+                    }
                     else if (projectedFace.SelectionStatus == Face3D.SelectionMode.SecondarySelection)
-                        graphics.FillPolygon(new HatchBrush(HatchStyle.Percent60, Color.Black, GetFaceColor(projectedFace.ColorIndex)), vertices);
+                    {
+                        using var brush = new HatchBrush(HatchStyle.Percent60, Color.Black, GetFaceColor(projectedFace.ColorIndex));
+                        graphics.FillPolygon(brush, vertices);
+                    }
                     else
-                        graphics.FillPolygon(new SolidBrush(GetFaceColor(projectedFace.ColorIndex)), vertices);
+                    {
+                        using var brush = new SolidBrush(GetFaceColor(projectedFace.ColorIndex));
+                        graphics.FillPolygon(brush, vertices);
+                    }
                     graphics.DrawPolygon(Pens.Black, vertices);
                 }
             }
             if (mouseHoveredFace != null)
             {
                 PointF[] vertices = mouseHoveredFace.Vertices.Select(p => new PointF((float)p.X, (float)p.Y)).ToArray();
-                graphics.FillPolygon(new HatchBrush(HatchStyle.Percent25, Color.Gold, GetFaceColor(mouseHoveredFace.ColorIndex)), vertices);
-                graphics.DrawPolygon(new Pen(Color.Gold, 3f), vertices);
+                using var hoverBrush = new HatchBrush(HatchStyle.Percent25, Color.Gold, GetFaceColor(mouseHoveredFace.ColorIndex));
+                using var hoverPen = new Pen(Color.Gold, 3f);
+                graphics.FillPolygon(hoverBrush, vertices);
+                graphics.DrawPolygon(hoverPen, vertices);
             }
 
             return mouseHoveredFace;

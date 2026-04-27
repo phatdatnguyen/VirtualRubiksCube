@@ -79,8 +79,8 @@
         {
             topButton.BackColor = Color.White;
             bottomButton.BackColor = Color.Yellow;
-            leftButton.BackColor = Color.Red;
-            rightButton.BackColor = Color.Orange;
+            leftButton.BackColor = Color.Orange;
+            rightButton.BackColor = Color.Red;
             frontButton.BackColor = Color.Green;
             backButton.BackColor = Color.Blue;
             animationTimeTrackBar.Value = 20;

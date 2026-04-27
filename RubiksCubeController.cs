@@ -76,9 +76,6 @@
                         if (targetCubeletsPosition != null)
                             cubelet.Vertices[i] = targetCubeletsPosition[cubelet][i];
 
-                if (IsSolved(currentState))
-                    Reset();
-
                 if (currentRotationInfo.IsExecutingMoveQueue && currentRotationInfo.Move != moveQueue.Last())
                 {
                     currentRotationInfo.CurrentMoveIndex += 1;
