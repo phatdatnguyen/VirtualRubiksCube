@@ -6,6 +6,7 @@
         private RubiksCubeState currentState;
         private List<RubiksCubeState> states = new();
         private List<Move> executedMoves = new();
+        private List<Move> moveHistory = new();  // history for reversal; reset when cube reaches solved state
         private List<Move> moveQueue = new();
         private RotationInfo currentRotationInfo;
         private List<Cubelet> currentRotatingLayer = new();
@@ -79,6 +80,10 @@
                 if (currentRotationInfo.IsExecutingMoveQueue && currentRotationInfo.Move != moveQueue.Last())
                 {
                     currentRotationInfo.CurrentMoveIndex += 1;
+                    // Between moves: if the cube is solved, reset moveHistory so the
+                    // remaining queue moves build a fresh history for reversal.
+                    if (IsSolved(currentState))
+                        moveHistory.Clear();
                     StartRotation(moveQueue[currentRotationInfo.CurrentMoveIndex]);
                 }
                 else
@@ -87,6 +92,9 @@
                     {
                         moveQueue.Clear();
                         currentRotationInfo.IsExecutingMoveQueue = false;
+                        // Last queue move just finished in solved state — fresh history start.
+                        if (IsSolved(currentState))
+                            moveHistory.Clear();
                     }
 
                     currentRotationInfo.IsRotating = false;
@@ -142,6 +150,7 @@
             currentState = newState;
             states.Add(currentState);
             executedMoves.Add(move);
+            moveHistory.Add(move);
 
             double frameRate = 60.0;
             currentRotationInfo.RotationStep = currentRotationInfo.TargetAngle / ((currentRotationInfo.AnimationTime / 1000.0) * frameRate);
@@ -327,6 +336,7 @@
                 currentState = newState;
                 states.Add(currentState);
                 executedMoves.Add(move);
+                moveHistory.Add(move);
 
                 double xAngle = 0, yAngle = 0, zAngle = 0;
                 switch (move.Axis)
@@ -348,28 +358,66 @@
             if (IsSolved(currentState))
                 return;
 
-            int i = executedMoves.Count - 1;
+            var raw = new List<Move>();
+            int i = moveHistory.Count - 1;
             while (i >= 0)
             {
-                // Skip a pair of counter moves
-                if (i >= 1)
-                    if (executedMoves[i].IsCounterMove(executedMoves[i - 1]))
-                    {
-                        i -= 2;
-                        continue;
-                    }
-
-                moveQueue.Add(executedMoves[i].GetCounterMove());
-
+                if (i >= 1 && moveHistory[i].IsCounterMove(moveHistory[i - 1]))
+                {
+                    i -= 2;
+                    continue;
+                }
+                raw.Add(moveHistory[i].GetCounterMove());
                 i--;
             }
+
+            foreach (var m in CollapseTriples(raw))
+                moveQueue.Add(m);
         }
 
-        public void GetSolverMoves()
+        // Collapse the tail of s repeatedly:
+        //   3 consecutive identical moves  →  their single counter move
+        //   2 consecutive counter moves    →  both removed
+        // Cascades until no more reductions are possible at the tail.
+        private static IEnumerable<Move> CollapseTriples(IEnumerable<Move> moves)
+        {
+            var s = new List<Move>();
+            foreach (var m in moves)
+            {
+                s.Add(m);
+                bool changed = true;
+                while (changed)
+                {
+                    changed = false;
+                    int n = s.Count;
+                    if (n >= 3)
+                    {
+                        var a = s[n - 3]; var b = s[n - 2]; var c = s[n - 1];
+                        if (a.Layer == b.Layer && b.Layer == c.Layer && a.Type == b.Type && b.Type == c.Type)
+                        {
+                            s.RemoveRange(n - 3, 3);
+                            s.Add(a.GetCounterMove());
+                            changed = true;
+                            continue;
+                        }
+                    }
+                    if (n >= 2 && s[n - 2].IsCounterMove(s[n - 1]))
+                    {
+                        s.RemoveRange(n - 2, 2);
+                        changed = true;
+                    }
+                }
+            }
+            return s;
+        }
+
+        // Returns true when solver succeeds and the move queue is populated; false when it fails
+        // (queue is left empty — the caller decides how to notify the user).
+        public bool GetSolverMoves()
         {
             moveQueue.Clear();
             if (IsSolved(currentState))
-                return;
+                return true;
 
             try
             {
@@ -378,23 +426,11 @@
                 foreach (var sm in solverMoves)
                     foreach (var m in sm.ToControllerMoves())
                         moveQueue.Add(m);
+                return true;
             }
             catch
             {
-                // LBL solver failed for this state. Fall back to history reversal if available.
-                moveQueue.Clear();
-                if (executedMoves.Count == 0) throw;
-                int i = executedMoves.Count - 1;
-                while (i >= 0)
-                {
-                    if (i >= 1 && executedMoves[i].IsCounterMove(executedMoves[i - 1]))
-                    {
-                        i -= 2;
-                        continue;
-                    }
-                    moveQueue.Add(executedMoves[i].GetCounterMove());
-                    i--;
-                }
+                return false;
             }
         }
 
@@ -412,6 +448,7 @@
         public void Reset()
         {
             executedMoves.Clear();
+            moveHistory.Clear();
             states.RemoveRange(1, states.Count - 1);
             currentState = states[0];
             foreach (Cubelet cubelet in RubiksCube.Cubelets)

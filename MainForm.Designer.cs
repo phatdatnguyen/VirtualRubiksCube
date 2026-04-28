@@ -79,6 +79,7 @@
             aboutToolStripMenuItem = new ToolStripMenuItem();
             menuStrip = new MenuStrip();
             renderPanel = new OpenTK.GLControl.GLControl();
+            solveStatusLabel = new Label();
             groupBox1.SuspendLayout();
             statusPanel.SuspendLayout();
             viewGroupBox.SuspendLayout();
@@ -87,6 +88,7 @@
             // 
             // groupBox1
             // 
+            groupBox1.Controls.Add(solveStatusLabel);
             groupBox1.Controls.Add(moveQueueListBox);
             groupBox1.Controls.Add(zPrimeButton);
             groupBox1.Controls.Add(zButton);
@@ -227,12 +229,12 @@
             // 
             // solveButton
             // 
-            solveButton.Location = new Point(254, 550);
+            solveButton.Location = new Point(8, 550);
             solveButton.Margin = new Padding(4, 3, 4, 3);
             solveButton.Name = "solveButton";
-            solveButton.Size = new Size(152, 27);
+            solveButton.Size = new Size(240, 27);
             solveButton.TabIndex = 24;
-            solveButton.Text = "Solve cube";
+            solveButton.Text = "Solve cube layer-by-layer";
             toolTip.SetToolTip(solveButton, "Real layer-by-layer solver");
             solveButton.UseVisualStyleBackColor = true;
             solveButton.Click += solveButton_Click;
@@ -628,6 +630,14 @@
             renderPanel.MouseMove += renderPanel_MouseMove;
             renderPanel.Resize += renderPanel_Resize;
             // 
+            // solveStatusLabel
+            // 
+            solveStatusLabel.AutoSize = true;
+            solveStatusLabel.Location = new Point(259, 555);
+            solveStatusLabel.Name = "solveStatusLabel";
+            solveStatusLabel.Size = new Size(0, 15);
+            solveStatusLabel.TabIndex = 25;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -710,6 +720,7 @@
         private ToolStripMenuItem aboutToolStripMenuItem;
         private MenuStrip menuStrip;
         private OpenTK.GLControl.GLControl renderPanel;
+        private Label solveStatusLabel;
     }
 }
 

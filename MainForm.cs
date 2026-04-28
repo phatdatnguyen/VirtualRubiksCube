@@ -1310,16 +1310,25 @@
             if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
+            Cursor = Cursors.WaitCursor;
             try
             {
-                controller.GetSolverMoves();
+                if (controller.GetSolverMoves())
+                {
+                    solveStatusLabel.ForeColor = Color.Green;
+                    solveStatusLabel.Text = "Solved!";
+                    moveQueueBindingSource.ResetBindings(false);
+                }
+                else
+                {
+                    solveStatusLabel.ForeColor = Color.Red;
+                    solveStatusLabel.Text = "Solver failed";
+                }
             }
-            catch (Exception ex)
+            finally
             {
-                MessageBox.Show(this, "Solver failed: " + ex.Message, "Solve cube", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                Cursor = Cursors.Default;
             }
-            moveQueueBindingSource.ResetBindings(false);
         }
         #endregion
     }

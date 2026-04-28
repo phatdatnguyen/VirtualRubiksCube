@@ -129,6 +129,8 @@ namespace VirtualRubiksCube.Solver
         private static readonly Dictionary<char, int[]> CwPerms = BuildPerms();
         // Inverse permutations (= CCW quarter-turns). Computed alongside.
         private static readonly Dictionary<char, int[]> CcwPerms = BuildInverses(CwPerms);
+        // Initialized after CwPerms/CcwPerms so BuildOrientations can call ApplyMove during type init.
+        public static readonly OrientationEntry[] Orientations = BuildOrientations();
 
         public void ApplyMove(SolverMove move)
         {
@@ -140,6 +142,38 @@ namespace VirtualRubiksCube.Solver
         public void ApplyMoves(IEnumerable<SolverMove> moves)
         {
             foreach (var m in moves) ApplyMove(m);
+        }
+
+        public FaceletCube ApplyOrientation(int[] perm)
+        {
+            char[] next = new char[FaceletCount];
+            for (int i = 0; i < FaceletCount; i++) next[i] = Facelets[perm[i]];
+            return new FaceletCube(next);
+        }
+
+        // Apply orientation AND relabel stickers so the solver's hardcoded face names
+        // (D=bottom, U=top, F/R/B/L=sides) are correct for this orientation.
+        // Without relabeling, the solver would place the wrong colors in Phase 1's D-cross etc.
+        public FaceletCube ApplyOrientationWithRelabel(OrientationEntry oe)
+        {
+            // Build relabel map: original face label -> solver face label.
+            // oe.OrigFace[fi] = original face for solver face fi, so
+            //   original label X becomes solver label faces[fi] where oe.OrigFace[fi] == X.
+            char[] faces = { 'U', 'R', 'F', 'D', 'L', 'B' };
+            var relabel = new char['Z' + 1]; // small ASCII range; 'B'..'U' covers all labels
+            for (int fi = 0; fi < 6; fi++)
+                relabel[oe.OrigFace[fi]] = faces[fi];
+
+            char[] next = new char[FaceletCount];
+            for (int i = 0; i < FaceletCount; i++)
+                next[i] = relabel[Facelets[oe.Perm[i]]];
+            return new FaceletCube(next);
+        }
+
+        public static SolverMove TranslateMove(SolverMove m, OrientationEntry oe)
+        {
+            int fi = FaceIndex(m.Face);
+            return new SolverMove(oe.OrigFace[fi], m.Quarter == 2 ? 2 : m.Quarter * oe.DirFlip[fi]);
         }
 
         private void ApplyPerm(int[] perm)
@@ -171,6 +205,131 @@ namespace VirtualRubiksCube.Solver
                 result[kv.Key] = inv;
             }
             return result;
+        }
+
+        // ---------- Whole-cube orientation support ----------
+
+        private static int FaceIndex(char c) => c switch
+        {
+            'U' => 0, 'R' => 1, 'F' => 2, 'D' => 3, 'L' => 4, 'B' => 5,
+            _ => throw new ArgumentException($"Unknown face '{c}'"),
+        };
+
+        // result[i] = a[b[i]]: applying perm a then perm b in sequence.
+        private static int[] ComposePerms(int[] a, int[] b)
+        {
+            var r = new int[FaceletCount];
+            for (int i = 0; i < FaceletCount; i++) r[i] = a[b[i]];
+            return r;
+        }
+
+        private static int[] BuildInversePerm(int[] perm)
+        {
+            var inv = new int[FaceletCount];
+            for (int i = 0; i < FaceletCount; i++) inv[perm[i]] = i;
+            return inv;
+        }
+
+        // Like ComputeFacePerm but rotates all 27 cubies (whole-cube rotation).
+        private static int[] ComputeWholeRotPerm(RubiksCube.Axis axis, int targetAngle)
+        {
+            var cubies = new List<SimCubie>();
+            for (sbyte x = -1; x <= 1; x++)
+                for (sbyte y = -1; y <= 1; y++)
+                    for (sbyte z = -1; z <= 1; z++)
+                    {
+                        var c = new SimCubie { X = x, Y = y, Z = z };
+                        if (y == -1) c.Up    = WorldToFaceletIndex(RubiksCube.Face.Top,    x, y, z);
+                        if (y ==  1) c.Down  = WorldToFaceletIndex(RubiksCube.Face.Bottom, x, y, z);
+                        if (x == -1) c.Left  = WorldToFaceletIndex(RubiksCube.Face.Left,   x, y, z);
+                        if (x ==  1) c.Right = WorldToFaceletIndex(RubiksCube.Face.Right,  x, y, z);
+                        if (z ==  1) c.Front = WorldToFaceletIndex(RubiksCube.Face.Front,  x, y, z);
+                        if (z == -1) c.Back  = WorldToFaceletIndex(RubiksCube.Face.Back,   x, y, z);
+                        cubies.Add(c);
+                    }
+
+            foreach (var c in cubies) RotateCubie(c, axis, targetAngle);
+
+            int[] post = new int[FaceletCount];
+            for (int i = 0; i < FaceletCount; i++) post[i] = -1;
+            foreach (var c in cubies)
+            {
+                if (c.Y == -1 && c.Up    >= 0) post[WorldToFaceletIndex(RubiksCube.Face.Top,    c.X, c.Y, c.Z)] = c.Up;
+                if (c.Y ==  1 && c.Down  >= 0) post[WorldToFaceletIndex(RubiksCube.Face.Bottom, c.X, c.Y, c.Z)] = c.Down;
+                if (c.X == -1 && c.Left  >= 0) post[WorldToFaceletIndex(RubiksCube.Face.Left,   c.X, c.Y, c.Z)] = c.Left;
+                if (c.X ==  1 && c.Right >= 0) post[WorldToFaceletIndex(RubiksCube.Face.Right,  c.X, c.Y, c.Z)] = c.Right;
+                if (c.Z ==  1 && c.Front >= 0) post[WorldToFaceletIndex(RubiksCube.Face.Front,  c.X, c.Y, c.Z)] = c.Front;
+                if (c.Z == -1 && c.Back  >= 0) post[WorldToFaceletIndex(RubiksCube.Face.Back,   c.X, c.Y, c.Z)] = c.Back;
+            }
+            return post;
+        }
+
+        // For each of the 6 solver face letters, compute which original face and direction
+        // corresponds to turning that face CW in the reoriented cube.
+        private static (char[], int[]) ComputeMoveTranslation(int[] rotPerm, int[] invRotPerm)
+        {
+            char[] faces = { 'U', 'R', 'F', 'D', 'L', 'B' };
+            char[] origFace = new char[6];
+            int[] dirFlip  = new int[6];
+
+            for (int fi = 0; fi < 6; fi++)
+            {
+                char f = faces[fi];
+
+                // Reorient solved cube, apply CW turn of f, undo reorientation.
+                var rotated = Solved().ApplyOrientation(rotPerm);
+                rotated.ApplyMove(new SolverMove(f, 1));
+                var unrotated = rotated.ApplyOrientation(invRotPerm);
+
+                // Find the original face move that produces the same result from a solved cube.
+                bool found = false;
+                foreach (char of in faces)
+                {
+                    foreach (int q in new[] { 1, -1 })
+                    {
+                        var test = Solved();
+                        test.ApplyMove(new SolverMove(of, q));
+                        bool match = true;
+                        for (int i = 0; i < FaceletCount; i++)
+                            if (test.Facelets[i] != unrotated.Facelets[i]) { match = false; break; }
+                        if (match) { origFace[fi] = of; dirFlip[fi] = q; found = true; break; }
+                    }
+                    if (found) break;
+                }
+                if (!found)
+                    throw new InvalidOperationException($"No original-face match for reoriented face '{f}'");
+            }
+            return (origFace, dirFlip);
+        }
+
+        private static OrientationEntry[] BuildOrientations()
+        {
+            int[] id   = Enumerable.Range(0, FaceletCount).ToArray();
+            // Elementary whole-cube rotations (same axis/angle convention as RotateCubie).
+            int[] x90  = ComputeWholeRotPerm(RubiksCube.Axis.X, +90); // B→D
+            int[] x90n = ComputeWholeRotPerm(RubiksCube.Axis.X, -90); // F→D
+            int[] y90  = ComputeWholeRotPerm(RubiksCube.Axis.Y, +90);
+            int[] z90  = ComputeWholeRotPerm(RubiksCube.Axis.Z, +90); // R→D
+            int[] z90n = ComputeWholeRotPerm(RubiksCube.Axis.Z, -90); // L→D
+            int[] x180 = ComposePerms(x90, x90);                      // U→D
+
+            // 6 base orientations: each puts a different face at the bottom.
+            int[][] bases = { id, x90n, x180, x90, z90, z90n }; // D, F, U, B, R, L on bottom
+
+            int[] y180 = ComposePerms(y90, y90);
+            int[] y270 = ComposePerms(y180, y90);
+            int[][] yCycles = { id, y90, y180, y270 };
+
+            var entries = new List<OrientationEntry>(24);
+            foreach (var bp in bases)
+                foreach (var yp in yCycles)
+                {
+                    int[] perm = ComposePerms(bp, yp);
+                    int[] inv  = BuildInversePerm(perm);
+                    var (oFace, dFlip) = ComputeMoveTranslation(perm, inv);
+                    entries.Add(new OrientationEntry(perm, inv, oFace, dFlip));
+                }
+            return entries.ToArray();
         }
 
         private static int[] ComputeFacePerm(char face)
@@ -356,6 +515,20 @@ namespace VirtualRubiksCube.Solver
             string row8 = $"      {s(30)}{s(31)}{s(32)}";
             string row9 = $"      {s(33)}{s(34)}{s(35)}";
             return string.Join("\n", new[] { row1, row2, row3, row4, row5, row6, row7, row8, row9 });
+        }
+    }
+
+    // Describes one of the 24 whole-cube orientations used by the solver retry loop.
+    public readonly struct OrientationEntry
+    {
+        public readonly int[]  Perm;      // 54-element sticker permutation
+        public readonly int[]  InvPerm;   // inverse permutation (to undo the rotation)
+        public readonly char[] OrigFace;  // OrigFace[fi] = original face letter for solver face index fi
+        public readonly int[]  DirFlip;   // ±1; multiply solver quarter by this to get original quarter
+
+        public OrientationEntry(int[] perm, int[] invPerm, char[] origFace, int[] dirFlip)
+        {
+            Perm = perm; InvPerm = invPerm; OrigFace = origFace; DirFlip = dirFlip;
         }
     }
 }

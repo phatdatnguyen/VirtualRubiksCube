@@ -13,8 +13,23 @@ namespace VirtualRubiksCube.Solver
     {
         public static List<SolverMove> Solve(FaceletCube start)
         {
-            var c = start.Clone();
-            var moves = new List<SolverMove>();
+            Exception? lastEx = null;
+            foreach (var oe in FaceletCube.Orientations)
+            {
+                var reoriented = start.ApplyOrientationWithRelabel(oe);
+                var moves = new List<SolverMove>();
+                try
+                {
+                    SolveOriented(reoriented, moves);
+                    return moves.Select(m => FaceletCube.TranslateMove(m, oe)).ToList();
+                }
+                catch (Exception ex) { lastEx = ex; }
+            }
+            throw lastEx!;
+        }
+
+        private static void SolveOriented(FaceletCube c, List<SolverMove> moves)
+        {
             SolveCross(c, moves);
             SolveBottomCorners(c, moves);
             SolveMiddleEdges(c, moves);
@@ -24,10 +39,19 @@ namespace VirtualRubiksCube.Solver
             OrientYellowCorners(c, moves);
             if (!c.IsSolved())
                 throw new InvalidOperationException("LBL solver did not finish; final state:\n" + c.ToDisplayString());
-            return moves;
         }
 
         // ---------- helpers ----------
+
+        // Full-state hash to avoid false pruning in BFS phases. A lightweight polynomial hash
+        // over all 54 facelets; collision probability is negligible in practice.
+        private static long FullStateHash(FaceletCube c)
+        {
+            long h = 0;
+            for (int i = 0; i < FaceletCube.FaceletCount; i++)
+                h = unchecked(h * 31 + c.Facelets[i]);
+            return h;
+        }
 
         private static void Apply(FaceletCube c, List<SolverMove> moves, string seq)
         {
@@ -464,71 +488,29 @@ namespace VirtualRubiksCube.Solver
         private static void OrientYellowEdges(FaceletCube c, List<SolverMove> moves)
         {
             BfsApply(c, moves,
-                hash: cube => (long)(
-                    ((cube.Facelets[1] == 'U' ? 1 : 0) << 0) |
-                    ((cube.Facelets[3] == 'U' ? 1 : 0) << 1) |
-                    ((cube.Facelets[5] == 'U' ? 1 : 0) << 2) |
-                    ((cube.Facelets[7] == 'U' ? 1 : 0) << 3)),
+                hash: FullStateHash,
                 goal: cube => cube.Facelets[1] == 'U' && cube.Facelets[3] == 'U' && cube.Facelets[5] == 'U' && cube.Facelets[7] == 'U',
                 moveSequences: new[] { "U", "U'", "U2", "F R U R' U' F'" },
-                maxDepth: 8,
+                maxDepth: 20,
                 phaseName: "Yellow cross orientation");
         }
 
         // ---------- Phase 5: permute U edges ----------
         private static void PermuteYellowEdges(FaceletCube c, List<SolverMove> moves)
         {
-            // BFS over (4 U-side facelets) state. Each is one of {F,R,B,L} after phase 4 ensures U on top.
             BfsApply(c, moves,
-                hash: cube => (FaceletBits(cube.Facelets[19]) << 0)   // F1
-                            | (FaceletBits(cube.Facelets[10]) << 3)   // R1
-                            | (FaceletBits(cube.Facelets[46]) << 6)   // B1
-                            | (FaceletBits(cube.Facelets[37]) << 9),  // L1
+                hash: FullStateHash,
                 goal: cube => cube.Facelets[19] == 'F' && cube.Facelets[10] == 'R' && cube.Facelets[46] == 'B' && cube.Facelets[37] == 'L',
                 moveSequences: new[] { "U", "U'", "U2", "R U R' U R U2 R'", "L' U' L U' L' U2 L" },
-                maxDepth: 14,
+                maxDepth: 25,
                 phaseName: "Yellow edge permutation");
         }
 
         // ---------- Phase 6: permute U corners ----------
         private static void PermuteYellowCorners(FaceletCube c, List<SolverMove> moves)
         {
-            // Hash: at each U-corner slot, identify the corner by its non-U color set.
-            // 4 possible color pairs: {F,L}=0, {F,R}=1, {R,B}=2, {B,L}=3.
-            // Plus we need to keep edges solved — hash includes side-edge facelets too.
             BfsApply(c, moves,
-                hash: cube =>
-                {
-                    long h = 0;
-                    for (int s = 0; s < 4; s++)
-                    {
-                        char x = cube.Facelets[CornerFacelets[s].A];
-                        char y = cube.Facelets[CornerFacelets[s].B];
-                        char z = cube.Facelets[CornerFacelets[s].C];
-                        // The non-U colors among {x,y,z}.
-                        char p = '?', q = '?';
-                        if (x != 'U') { p = x; }
-                        if (y != 'U') { if (p == '?') p = y; else q = y; }
-                        if (z != 'U') { if (p == '?') p = z; else q = z; }
-                        // Sort lexicographically.
-                        if (p > q) { var t = p; p = q; q = t; }
-                        long pair = (p, q) switch
-                        {
-                            ('F', 'L') => 0L,
-                            ('F', 'R') => 1L,
-                            ('B', 'R') => 2L,
-                            ('B', 'L') => 3L,
-                            _ => 7L,
-                        };
-                        h |= pair << (s * 3);
-                    }
-                    // Include U-side-edge facelets so phase 5 progress isn't lost.
-                    h |= FaceletBits(cube.Facelets[19]) << 12;
-                    h |= FaceletBits(cube.Facelets[10]) << 15;
-                    h |= FaceletBits(cube.Facelets[46]) << 18;
-                    h |= FaceletBits(cube.Facelets[37]) << 21;
-                    return h;
-                },
+                hash: FullStateHash,
                 goal: cube =>
                 {
                     for (int s = 0; s < 4; s++)
@@ -536,7 +518,7 @@ namespace VirtualRubiksCube.Solver
                     return cube.Facelets[19] == 'F' && cube.Facelets[10] == 'R' && cube.Facelets[46] == 'B' && cube.Facelets[37] == 'L';
                 },
                 moveSequences: new[] { "U", "U'", "U2", "U R U' L' U R' U' L", "U' L' U R U' L U R'" },
-                maxDepth: 12,
+                maxDepth: 25,
                 phaseName: "Yellow corner permutation");
         }
 
@@ -554,30 +536,11 @@ namespace VirtualRubiksCube.Solver
         // ---------- Phase 7: orient U corners ----------
         private static void OrientYellowCorners(FaceletCube c, List<SolverMove> moves)
         {
-            // Hash: U-face stickers at the 4 U-corner positions + side-edge alignment.
-            // For each corner, encode whether U-color is on top, on first side, or on second side (3 states).
             BfsApply(c, moves,
-                hash: cube =>
-                {
-                    long h = 0;
-                    for (int s = 0; s < 4; s++)
-                    {
-                        var (sA, sB, sC) = CornerFacelets[s];
-                        long ori;
-                        if (cube.Facelets[sA] == 'U') ori = 0;
-                        else if (cube.Facelets[sB] == 'U') ori = 1;
-                        else ori = 2;
-                        h |= ori << (s * 2);
-                    }
-                    h |= FaceletBits(cube.Facelets[19]) << 8;
-                    h |= FaceletBits(cube.Facelets[10]) << 11;
-                    h |= FaceletBits(cube.Facelets[46]) << 14;
-                    h |= FaceletBits(cube.Facelets[37]) << 17;
-                    return h;
-                },
+                hash: FullStateHash,
                 goal: cube => cube.IsSolved(),
                 moveSequences: new[] { "U", "U'", "U2", "R' D' R D", "R' D' R D R' D' R D" },
-                maxDepth: 28,
+                maxDepth: 50,
                 phaseName: "Yellow corner orientation");
         }
     }
