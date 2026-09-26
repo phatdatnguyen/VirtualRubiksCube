@@ -4,13 +4,12 @@
     {
         #region Fields
         private RubiksCubeState currentState;
-        private List<RubiksCubeState> states = new();
-        private List<Move> executedMoves = new();
         private List<Move> moveHistory = new();  // history for reversal; reset when cube reaches solved state
         private List<Move> moveQueue = new();
         private RotationInfo currentRotationInfo;
         private List<Cubelet> currentRotatingLayer = new();
         private Dictionary<Cubelet, Point3D[]>? targetCubeletsPosition;
+        private int solverRequestVersion;
         #endregion
 
         #region Properties
@@ -18,6 +17,7 @@
         public RotationInfo CurrentRotationInfo { get { return currentRotationInfo; } }
         public List<Move> MoveQueue { get { return moveQueue; } }
         public IReadOnlyList<Cubelet> CurrentRotatingLayer { get { return currentRotatingLayer; } }
+        public string? SolverError { get; private set; }
         #endregion
 
         #region Events
@@ -37,15 +37,16 @@
             Dictionary<Cubelet, (sbyte, sbyte, sbyte)> initialCubeletsPosition = new();
             foreach (Cubelet cubelet in rubiksCube.Cubelets)
                 initialCubeletsPosition.Add(cubelet, cubelet.OriginalPosition);
-            states.Add(new RubiksCubeState(initialCubeletsPosition));
-
-            currentState = states[0];
+            currentState = new RubiksCubeState(initialCubeletsPosition);
         }
         #endregion
 
         #region Methods
         public void RotateStep()
         {
+            if (!currentRotationInfo.IsRotating)
+                return;
+
             if (currentRotationInfo.CurrentStep < currentRotationInfo.NumberOfSteps)
             {
                 double xAngle = 0;
@@ -77,14 +78,13 @@
                         if (targetCubeletsPosition != null)
                             cubelet.Vertices[i] = targetCubeletsPosition[cubelet][i];
 
-                if (currentRotationInfo.IsExecutingMoveQueue && currentRotationInfo.Move != moveQueue.Last())
+                if (IsSolved(currentState))
+                    moveHistory.Clear();
+
+                if (currentRotationInfo.IsExecutingMoveQueue && currentRotationInfo.CurrentMoveIndex + 1 < moveQueue.Count)
                 {
                     currentRotationInfo.CurrentMoveIndex += 1;
-                    // Between moves: if the cube is solved, reset moveHistory so the
-                    // remaining queue moves build a fresh history for reversal.
-                    if (IsSolved(currentState))
-                        moveHistory.Clear();
-                    StartRotation(moveQueue[currentRotationInfo.CurrentMoveIndex]);
+                    BeginRotation(moveQueue[currentRotationInfo.CurrentMoveIndex]);
                 }
                 else
                 {
@@ -92,9 +92,6 @@
                     {
                         moveQueue.Clear();
                         currentRotationInfo.IsExecutingMoveQueue = false;
-                        // Last queue move just finished in solved state — fresh history start.
-                        if (IsSolved(currentState))
-                            moveHistory.Clear();
                     }
 
                     currentRotationInfo.IsRotating = false;
@@ -105,6 +102,14 @@
 
         // on render thread
         public void StartRotation(Move move)
+        {
+            if (currentRotationInfo.IsRotating)
+                return;
+
+            BeginRotation(move);
+        }
+
+        private void BeginRotation(Move move)
         {
             RubiksCubeState newState = currentState.Clone();
 
@@ -138,7 +143,7 @@
                     }
 
                     for (byte i = 0; i < 6; i++)
-                        cubelet.CurrentFaces[i] = RotateFace(cubelet.CurrentFaces[i], move);
+                        newState.CubeletsFaces[cubelet][i] = cubelet.CurrentFaces[i] = RotateFace(cubelet.CurrentFaces[i], move);
 
                     currentRotatingLayer.Add(cubelet);
                 }
@@ -148,8 +153,6 @@
             }
 
             currentState = newState;
-            states.Add(currentState);
-            executedMoves.Add(move);
             moveHistory.Add(move);
 
             double frameRate = 60.0;
@@ -158,7 +161,7 @@
             currentRotationInfo.IsRotating = true;
 
             if (!currentRotationInfo.IsExecutingMoveQueue ||
-                (currentRotationInfo.IsExecutingMoveQueue && move == moveQueue[0]))
+                currentRotationInfo.CurrentMoveIndex == 0)
                 // Raise the event
                 RotationStarted?.Invoke(this);
         }
@@ -281,7 +284,7 @@
 
         public void ExecuteMoveQueue()
         {
-            if (moveQueue.Count == 0)
+            if (currentRotationInfo.IsRotating || moveQueue.Count == 0)
                 return;
 
             currentRotationInfo.IsExecutingMoveQueue = true;
@@ -291,6 +294,9 @@
 
         public void Scramble(List<Move> moves)
         {
+            if (currentRotationInfo.IsRotating)
+                return;
+
             foreach (Move move in moves)
             {
                 RubiksCubeState newState = currentState.Clone();
@@ -324,7 +330,7 @@
                         }
 
                         for (byte i = 0; i < 6; i++)
-                            cubelet.CurrentFaces[i] = RotateFace(cubelet.CurrentFaces[i], move);
+                            newState.CubeletsFaces[cubelet][i] = cubelet.CurrentFaces[i] = RotateFace(cubelet.CurrentFaces[i], move);
 
                         rotatingLayer.Add(cubelet);
                     }
@@ -334,9 +340,9 @@
                 }
 
                 currentState = newState;
-                states.Add(currentState);
-                executedMoves.Add(move);
                 moveHistory.Add(move);
+                if (IsSolved(currentState))
+                    moveHistory.Clear();
 
                 double xAngle = 0, yAngle = 0, zAngle = 0;
                 switch (move.Axis)
@@ -354,6 +360,9 @@
 
         public void GetSolutionMoves()
         {
+            if (currentRotationInfo.IsRotating)
+                return;
+
             moveQueue.Clear();
             if (IsSolved(currentState))
                 return;
@@ -413,53 +422,149 @@
 
         // Returns true when solver succeeds and the move queue is populated; false when it fails
         // (queue is left empty — the caller decides how to notify the user).
-        public bool GetSolverMoves()
+        public bool GetSolverMoves(CancellationToken cancellationToken = default)
         {
+            if (currentRotationInfo.IsRotating)
+                return false;
+
+            solverRequestVersion++;
             moveQueue.Clear();
-            if (IsSolved(currentState))
-                return true;
+            SolverError = null;
 
             try
             {
                 var facelet = Solver.FaceletCube.FromControllerState(RubiksCube);
-                var solverMoves = Solver.LayerByLayerSolver.Solve(facelet);
-                foreach (var sm in solverMoves)
-                    foreach (var m in sm.ToControllerMoves())
-                        moveQueue.Add(m);
+                moveQueue.AddRange(BuildSolverMoves(facelet, cancellationToken));
                 return true;
             }
-            catch
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
             {
+                SolverError = ex.Message;
                 return false;
             }
         }
 
+        public Task<bool> GetSolverMovesAsync(CancellationToken cancellationToken = default) =>
+            GetSolverMovesAsync((facelet, token) => Task.Run(() => BuildSolverMoves(facelet, token), token), cancellationToken);
+
+        // Isolate background calculation from result handling so cancellation and stale-state
+        // behavior can be tested with a controlled completion, without relying on timing.
+        internal async Task<bool> GetSolverMovesAsync(
+            Func<Solver.FaceletCube, CancellationToken, Task<List<Move>>> solveAsync,
+            CancellationToken cancellationToken = default)
+        {
+            if (currentRotationInfo.IsRotating)
+                return false;
+
+            int requestVersion = ++solverRequestVersion;
+            moveQueue.Clear();
+            SolverError = null;
+            var stateAtStart = currentState;
+            try
+            {
+                // Capture the live model on the UI thread. The worker only sees this snapshot.
+                var facelet = Solver.FaceletCube.FromControllerState(RubiksCube);
+                var moves = await solveAsync(facelet, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                if (requestVersion != solverRequestVersion)
+                    return false;
+                if (!ReferenceEquals(currentState, stateAtStart))
+                {
+                    SolverError = "The cube changed while the solution was being calculated.";
+                    return false;
+                }
+                moveQueue.AddRange(moves);
+                return true;
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                if (requestVersion == solverRequestVersion)
+                    SolverError = ex.Message;
+                return false;
+            }
+        }
+
+        private static List<Move> BuildSolverMoves(Solver.FaceletCube facelet, CancellationToken cancellationToken)
+        {
+            var solverMoves = Solver.LayerByLayerSolver.Solve(facelet.Clone(), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            facelet.ApplyMoves(solverMoves);
+            if (!facelet.IsSolved())
+                throw new InvalidOperationException("The solver returned a sequence that does not solve the cube.");
+
+            return solverMoves.SelectMany(move => move.ToControllerMoves()).ToList();
+        }
+
         public static bool IsSolved(RubiksCubeState rubiksCubeState)
         {
-            bool isSolved = true;
+            // Compare the visible stickers, including their orientation. A solved
+            // cube may have been rotated as a whole using the middle slices.
+            var faceColors = new Dictionary<RubiksCube.Face, byte>();
+            var faceCounts = new Dictionary<RubiksCube.Face, int>();
+            RubiksCube.Layer[] stickerLayers =
+            {
+                RubiksCube.Layer.Up, RubiksCube.Layer.Down, RubiksCube.Layer.Left,
+                RubiksCube.Layer.Right, RubiksCube.Layer.Front, RubiksCube.Layer.Back
+            };
 
-            foreach (Cubelet cubelet in rubiksCubeState.CubeletsPosition.Keys)
-                if (cubelet.CurrentLayers != cubelet.OriginalLayers)
-                    isSolved = false;
+            foreach (var entry in rubiksCubeState.CubeletsPosition)
+            {
+                var cubelet = entry.Key;
+                var (x, y, z) = entry.Value;
+                for (byte slot = 0; slot < stickerLayers.Length; slot++)
+                {
+                    if (!cubelet.OriginalLayers.HasFlag(stickerLayers[slot]))
+                        continue;
 
-            return isSolved;
+                    var face = rubiksCubeState.CubeletsFaces[cubelet][slot];
+                    bool isOutside = face switch
+                    {
+                        RubiksCube.Face.Top => y == -1,
+                        RubiksCube.Face.Bottom => y == 1,
+                        RubiksCube.Face.Left => x == -1,
+                        RubiksCube.Face.Right => x == 1,
+                        RubiksCube.Face.Front => z == 1,
+                        RubiksCube.Face.Back => z == -1,
+                        _ => false
+                    };
+                    if (!isOutside || (faceColors.TryGetValue(face, out byte color) && color != slot))
+                        return false;
+
+                    faceColors[face] = slot;
+                    faceCounts[face] = faceCounts.GetValueOrDefault(face) + 1;
+                }
+            }
+
+            return faceCounts.Count == 6 && faceCounts.Values.All(count => count == 9);
         }
 
         public void Reset()
         {
-            executedMoves.Clear();
+            SolverError = null;
             moveHistory.Clear();
-            states.RemoveRange(1, states.Count - 1);
-            currentState = states[0];
+            moveQueue.Clear();
+            currentRotationInfo = new RotationInfo { AnimationTime = currentRotationInfo.AnimationTime };
+            currentRotatingLayer.Clear();
+            targetCubeletsPosition = null;
             foreach (Cubelet cubelet in RubiksCube.Cubelets)
             {
+                var (x, y, z) = cubelet.OriginalPosition;
+                var initialCubelet = new Cubelet(RubiksCube, cubelet.Size, x, y, z);
+                cubelet.CurrentPosition = cubelet.OriginalPosition;
+                Array.Copy(initialCubelet.Vertices, cubelet.Vertices, cubelet.Vertices.Length);
                 cubelet.CurrentFaces[0] = RubiksCube.Face.Top;
                 cubelet.CurrentFaces[1] = RubiksCube.Face.Bottom;
                 cubelet.CurrentFaces[2] = RubiksCube.Face.Left;
                 cubelet.CurrentFaces[3] = RubiksCube.Face.Right;
                 cubelet.CurrentFaces[4] = RubiksCube.Face.Front;
                 cubelet.CurrentFaces[5] = RubiksCube.Face.Back;
+                for (byte slot = 0; slot < 6; slot++)
+                    cubelet.SetSelectionMode(slot, Face3D.SelectionMode.None);
             }
+            currentState = new RubiksCubeState(RubiksCube.Cubelets.ToDictionary(
+                cubelet => cubelet, cubelet => cubelet.CurrentPosition));
         }
 
         public void SetRotationInfo(RotationInfo rotationInfo)

@@ -3,9 +3,9 @@ namespace VirtualRubiksCube.Solver
     // 54-sticker representation of a 3x3 cube, Singmaster/Kociemba layout:
     //   indices  0..8  = U face,  9..17 = R,  18..26 = F,  27..35 = D,  36..44 = L,  45..53 = B
     //
-    // Stickers are stored as char labels 'U','D','L','R','F','B' meaning "this sticker came from the
-    // original face whose center has that label". This is the only color information the solver needs:
-    // the 6 center stickers' labels never change because centers don't move.
+    // Stickers are stored as char labels 'U','D','L','R','F','B', relative to the current centers.
+    // The controller allows slice turns, so its centers can move. Conversion relabels their colors
+    // to the current world faces before the solver applies its outer-face moves.
     //
     // Apply moves with ApplyMove(face, quarter). The 6 quarter-CW permutations are precomputed once
     // in the static constructor by simulating each move on a uniquely labeled cube.
@@ -25,6 +25,102 @@ namespace VirtualRubiksCube.Solver
         private FaceletCube(char[] facelets) { Facelets = facelets; }
 
         public FaceletCube Clone() => new FaceletCube((char[])Facelets.Clone());
+
+        // Corner tuples have consistent handedness. Merely matching unordered color sets would
+        // also accept reflected corners, which cannot occur on a physical cube.
+        private static readonly int[][] CornerFacelets =
+        {
+            new[] { 8, 9, 20 }, new[] { 6, 18, 38 }, new[] { 0, 36, 47 }, new[] { 2, 45, 11 },
+            new[] { 29, 26, 15 }, new[] { 27, 44, 24 }, new[] { 33, 53, 42 }, new[] { 35, 17, 51 },
+        };
+
+        private static readonly int[][] EdgeFacelets =
+        {
+            new[] { 5, 10 }, new[] { 7, 19 }, new[] { 3, 37 }, new[] { 1, 46 },
+            new[] { 32, 16 }, new[] { 28, 25 }, new[] { 30, 43 }, new[] { 34, 52 },
+            new[] { 23, 12 }, new[] { 21, 41 }, new[] { 50, 39 }, new[] { 48, 14 },
+        };
+
+        private const string FaceLabels = "URFDLB";
+
+        // Reject impossible states before any search. Facelets are intentionally mutable for
+        // simulation, so validation is performed at the solver boundary, not after every move.
+        public void Validate()
+        {
+            int[] counts = new int[6];
+            foreach (char color in Facelets)
+            {
+                int face = FaceLabels.IndexOf(color);
+                if (face < 0)
+                    throw new InvalidOperationException($"The cube contains an unknown sticker color '{color}'.");
+                counts[face]++;
+            }
+            for (int face = 0; face < 6; face++)
+            {
+                if (counts[face] != 9)
+                    throw new InvalidOperationException($"The cube must contain exactly nine '{FaceLabels[face]}' stickers.");
+                if (Facelets[face * 9 + 4] != FaceLabels[face])
+                    throw new InvalidOperationException("Cube colors must be normalized to their current centers.");
+            }
+
+            var (corners, cornerTwist) = DecodePieces(CornerFacelets, "corner");
+            var (edges, edgeFlip) = DecodePieces(EdgeFacelets, "edge");
+            if (cornerTwist % 3 != 0)
+                throw new InvalidOperationException("The cube has an impossible corner twist.");
+            if (edgeFlip % 2 != 0)
+                throw new InvalidOperationException("The cube has an impossible flipped edge.");
+            if (PermutationParity(corners) != PermutationParity(edges))
+                throw new InvalidOperationException("The cube has mismatched corner and edge permutation parity.");
+        }
+
+        private (int[] permutation, int orientationSum) DecodePieces(int[][] positions, string kind)
+        {
+            int[] permutation = new int[positions.Length];
+            bool[] seen = new bool[positions.Length];
+            int orientationSum = 0;
+            for (int position = 0; position < positions.Length; position++)
+            {
+                int pieceFound = -1, orientationFound = 0;
+                int stickers = positions[position].Length;
+                for (int piece = 0; piece < positions.Length && pieceFound < 0; piece++)
+                    for (int orientation = 0; orientation < stickers; orientation++)
+                    {
+                        bool matches = true;
+                        for (int sticker = 0; sticker < stickers; sticker++)
+                        {
+                            int source = positions[piece][(sticker + stickers - orientation) % stickers];
+                            if (Facelets[positions[position][sticker]] != FaceLabels[source / 9])
+                            {
+                                matches = false;
+                                break;
+                            }
+                        }
+                        if (matches)
+                        {
+                            pieceFound = piece;
+                            orientationFound = orientation;
+                            break;
+                        }
+                    }
+                if (pieceFound < 0)
+                    throw new InvalidOperationException($"The cube contains an invalid or reflected {kind} at position {position + 1}.");
+                if (seen[pieceFound])
+                    throw new InvalidOperationException($"The cube contains a duplicate {kind} piece.");
+                seen[pieceFound] = true;
+                permutation[position] = pieceFound;
+                orientationSum += orientationFound;
+            }
+            return (permutation, orientationSum);
+        }
+
+        private static int PermutationParity(int[] permutation)
+        {
+            int parity = 0;
+            for (int i = 0; i < permutation.Length; i++)
+                for (int j = i + 1; j < permutation.Length; j++)
+                    if (permutation[i] > permutation[j]) parity ^= 1;
+            return parity;
+        }
 
         public bool IsSolved()
         {
@@ -54,12 +150,26 @@ namespace VirtualRubiksCube.Solver
         // Build a facelet cube from the live controller state.
         public static FaceletCube FromControllerState(RubiksCube cube)
         {
+            ArgumentNullException.ThrowIfNull(cube);
+            if (cube.Cubelets.Count != 27)
+                throw new InvalidOperationException("The cube must contain exactly 27 cubelets.");
+
             char[] facelets = new char[FaceletCount];
             for (int i = 0; i < FaceletCount; i++) facelets[i] = '?';
+            var occupied = new HashSet<(sbyte, sbyte, sbyte)>();
+            var originalPositions = new HashSet<(sbyte, sbyte, sbyte)>();
 
             foreach (Cubelet cubelet in cube.Cubelets)
             {
                 (sbyte x, sbyte y, sbyte z) = cubelet.CurrentPosition;
+                if (x < -1 || x > 1 || y < -1 || y > 1 || z < -1 || z > 1 ||
+                    !occupied.Add(cubelet.CurrentPosition) || !originalPositions.Add(cubelet.OriginalPosition))
+                    throw new InvalidOperationException("The cube contains an invalid or duplicate cubelet position.");
+                var directions = new HashSet<RubiksCube.Face>();
+                for (byte slot = 0; slot < 6; slot++)
+                    if (!cubelet.CurrentFaces.TryGetValue(slot, out var direction) ||
+                        direction < RubiksCube.Face.Top || direction > RubiksCube.Face.Back || !directions.Add(direction))
+                        throw new InvalidOperationException("A cubelet contains invalid sticker directions.");
                 if (y == -1) EmitSticker(facelets, cubelet, x, y, z, RubiksCube.Face.Top);
                 if (y ==  1) EmitSticker(facelets, cubelet, x, y, z, RubiksCube.Face.Bottom);
                 if (x == -1) EmitSticker(facelets, cubelet, x, y, z, RubiksCube.Face.Left);
@@ -68,7 +178,25 @@ namespace VirtualRubiksCube.Solver
                 if (z == -1) EmitSticker(facelets, cubelet, x, y, z, RubiksCube.Face.Back);
             }
 
-            return new FaceletCube(facelets);
+            // A middle-slice turn moves four centers. Hardcoded original color names then give
+            // the solver the wrong targets, despite this being a perfectly legal cube state.
+            var colorsToFaces = new Dictionary<char, char>();
+            for (int face = 0; face < 6; face++)
+            {
+                char center = facelets[face * 9 + 4];
+                if (!FaceLabels.Contains(center) || !colorsToFaces.TryAdd(center, FaceLabels[face]))
+                    throw new InvalidOperationException("The cube must have six distinct center colors.");
+            }
+            for (int i = 0; i < FaceletCount; i++)
+            {
+                if (!colorsToFaces.TryGetValue(facelets[i], out char normalized))
+                    throw new InvalidOperationException("The cube contains a missing or invalid sticker.");
+                facelets[i] = normalized;
+            }
+
+            var result = new FaceletCube(facelets);
+            result.Validate();
+            return result;
         }
 
         private static void EmitSticker(char[] facelets, Cubelet cubelet, sbyte x, sbyte y, sbyte z, RubiksCube.Face worldDir)
@@ -77,7 +205,19 @@ namespace VirtualRubiksCube.Solver
             byte slot = 255;
             for (byte s = 0; s < 6; s++)
                 if (cubelet.CurrentFaces[s] == worldDir) { slot = s; break; }
-            if (slot == 255) return;
+            if (slot == 255)
+                throw new InvalidOperationException("A cubelet is missing an exposed sticker direction.");
+
+            var (originalX, originalY, originalZ) = cubelet.OriginalPosition;
+            bool hasSticker = slot switch
+            {
+                0 => originalY == -1, 1 => originalY == 1,
+                2 => originalX == -1, 3 => originalX == 1,
+                4 => originalZ == 1, 5 => originalZ == -1,
+                _ => false,
+            };
+            if (!hasSticker)
+                throw new InvalidOperationException("An uncolored internal cubelet face is exposed.");
 
             // Slot 0 was initially Top, slot 1 Bottom, etc. The slot's "color label" is fixed —
             // it identifies which original cube face's color this side of the cubelet shows.
@@ -178,9 +318,9 @@ namespace VirtualRubiksCube.Solver
 
         private void ApplyPerm(int[] perm)
         {
-            char[] next = new char[FaceletCount];
+            Span<char> next = stackalloc char[FaceletCount];
             for (int i = 0; i < FaceletCount; i++) next[i] = Facelets[perm[i]];
-            Array.Copy(next, Facelets, FaceletCount);
+            next.CopyTo(Facelets);
         }
 
         // ---------- Permutation construction ----------

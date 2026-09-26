@@ -141,7 +141,8 @@
         {
             get
             {
-                return !(IsCenter || IsCorner);
+                var (x, y, z) = CurrentPosition;
+                return Math.Abs(x) + Math.Abs(y) + Math.Abs(z) == 2;
             }
         }
         #endregion
@@ -214,7 +215,9 @@
                     break;
                 }
 
-            return faces[faceIndex];
+            // Animation replaces vertex objects, so cached faces can be stale (or
+            // uninitialized if Faces has never been read).
+            return Faces[faceIndex];
         }
         #endregion
     }

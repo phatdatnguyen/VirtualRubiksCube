@@ -17,6 +17,8 @@
         private double defaultRotationZ = 0;
 
         private bool isRotating = false;
+        private bool isSolving;
+        private CancellationTokenSource? solveCancellation;
         private Point oldMousePosition;
         private BindingSource moveQueueBindingSource = new();
         private SettingDialog settingDialog = new();
@@ -110,7 +112,14 @@
 
         private void ResetCube()
         {
+            CancelPendingSolve();
             renderTimer.Stop();
+            glReady = false;
+            isRotating = false;
+            mouseHoveredFace = null;
+            selectedFace = null;
+            solveStatusLabel.Text = string.Empty;
+            Cursor = Cursors.Default;
             try { renderer?.Dispose(); } catch { }
 
             rubiksCube = new RubiksCube(100);
@@ -148,12 +157,14 @@
         private void OnRotationStarted(object sender)
         {
             isRotating = true;
+            solveStatusLabel.Text = string.Empty;
             Cursor = Cursors.WaitCursor;
         }
 
         private void OnRotationFinished(object sender)
         {
             moveQueueListBox.DataSource ??= moveQueueBindingSource;
+            moveQueueBindingSource.ResetBindings(false);
 
             isRotating = false;
             Cursor = Cursors.Default;
@@ -161,7 +172,18 @@
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
+            CancelPendingSolve();
+            renderTimer.Dispose();
+            renderer.Dispose();
             Application.Exit();
+        }
+
+        private void CancelPendingSolve()
+        {
+            solveCancellation?.Cancel();
+            solveCancellation = null;
+            isSolving = false;
+            groupBox1.Enabled = true;
         }
 
         // Menu
@@ -173,9 +195,13 @@
 
         private void scrambleToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ScrambleDialog scrambleDialog = new();
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+                return;
+
+            using ScrambleDialog scrambleDialog = new();
             scrambleDialog.ShowDialog(this);
-            if (scrambleDialog.DialogResult == DialogResult.OK)
+            if (scrambleDialog.DialogResult == DialogResult.OK &&
+                !isSolving && renderer.IsRunning && !controller.CurrentRotationInfo.IsRotating)
             {
                 int numberOfMoves = scrambleDialog.NumberOfMoves;
                 List<Move> randomMoves = new();
@@ -240,7 +266,7 @@
 
         private void solveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             controller.GetSolutionMoves();
@@ -249,7 +275,7 @@
 
         private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             if (settingDialog.ShowDialog(this) == DialogResult.OK)
@@ -361,7 +387,7 @@
 
         private void renderPanel_MouseClick(object sender, MouseEventArgs e)
         {
-            if (!glReady || controller.CurrentRotationInfo.IsRotating || e.Button != MouseButtons.Left || mouseHoveredFace == null || e.X < 0 || e.X > renderPanel.ClientSize.Width || e.Y < 0 || e.Y > renderPanel.ClientSize.Height)
+            if (isSolving || !glReady || controller.CurrentRotationInfo.IsRotating || e.Button != MouseButtons.Left || mouseHoveredFace == null || e.X < 0 || e.X > renderPanel.ClientSize.Width || e.Y < 0 || e.Y > renderPanel.ClientSize.Height)
                 return;
 
             if (mouseHoveredFace.SelectionStatus == Face3D.SelectionMode.None)
@@ -852,6 +878,9 @@
         // Keyboard control
         private void MainForm_KeyDown(object sender, KeyEventArgs e)
         {
+            if (isSolving)
+                return;
+
             if (e.Modifiers == Keys.Shift)
             {
                 if (e.KeyCode == Keys.U)
@@ -907,7 +936,7 @@
 
         private void showViewButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             switch (viewComboBox.SelectedIndex)
@@ -955,7 +984,7 @@
         // Moves and Queue
         private void uButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Clockwise);
@@ -973,7 +1002,7 @@
 
         private void uPrimeButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Up, VirtualRubiksCube.Move.RotationType.Counterclockwise);
@@ -991,7 +1020,7 @@
 
         private void yButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.MiddleY, VirtualRubiksCube.Move.RotationType.Clockwise);
@@ -1009,7 +1038,7 @@
 
         private void yPrimeButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.MiddleY, VirtualRubiksCube.Move.RotationType.Counterclockwise);
@@ -1027,7 +1056,7 @@
 
         private void dButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Clockwise);
@@ -1045,7 +1074,7 @@
 
         private void dPrimeButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Down, VirtualRubiksCube.Move.RotationType.Counterclockwise);
@@ -1063,7 +1092,7 @@
 
         private void lButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Clockwise);
@@ -1081,7 +1110,7 @@
 
         private void lPrimeButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Left, VirtualRubiksCube.Move.RotationType.Counterclockwise);
@@ -1099,7 +1128,7 @@
 
         private void xButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.MiddleX, VirtualRubiksCube.Move.RotationType.Clockwise);
@@ -1117,7 +1146,7 @@
 
         private void xPrimeButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.MiddleX, VirtualRubiksCube.Move.RotationType.Counterclockwise);
@@ -1135,7 +1164,7 @@
 
         private void rButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Clockwise);
@@ -1153,7 +1182,7 @@
 
         private void rPrimeButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Right, VirtualRubiksCube.Move.RotationType.Counterclockwise);
@@ -1171,7 +1200,7 @@
 
         private void fButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Clockwise);
@@ -1189,7 +1218,7 @@
 
         private void fPrimeButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Front, VirtualRubiksCube.Move.RotationType.Counterclockwise);
@@ -1207,7 +1236,7 @@
 
         private void zButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.MiddleZ, VirtualRubiksCube.Move.RotationType.Clockwise);
@@ -1225,7 +1254,7 @@
 
         private void zPrimeButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.MiddleZ, VirtualRubiksCube.Move.RotationType.Counterclockwise);
@@ -1243,7 +1272,7 @@
 
         private void bButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Clockwise);
@@ -1261,7 +1290,7 @@
 
         private void bPrimeButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             Move newMove = new(RubiksCube.Layer.Back, VirtualRubiksCube.Move.RotationType.Counterclockwise);
@@ -1279,7 +1308,7 @@
 
         private void executeQueueButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating || controller.MoveQueue.Count == 0)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating || controller.MoveQueue.Count == 0)
                 return;
 
             moveQueueListBox.DataSource = null;
@@ -1289,7 +1318,7 @@
 
         private void clearQueueButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating || controller.MoveQueue.Count == 0)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating || controller.MoveQueue.Count == 0)
                 return;
 
             controller.MoveQueue.Clear();
@@ -1298,36 +1327,63 @@
 
         private void setQueueToSolutionButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
             controller.GetSolutionMoves();
             moveQueueBindingSource.ResetBindings(false);
         }
 
-        private void solveButton_Click(object sender, EventArgs e)
+        private async void solveButton_Click(object sender, EventArgs e)
         {
-            if (!renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
+            if (isSolving || !renderer.IsRunning || controller.CurrentRotationInfo.IsRotating)
                 return;
 
+            using var cancellation = new CancellationTokenSource();
+            solveCancellation = cancellation;
+            var solvingController = controller;
+            isSolving = true;
+            groupBox1.Enabled = false;
+            solveStatusLabel.ForeColor = SystemColors.ControlText;
+            solveStatusLabel.Text = "Finding solution...";
+            toolTip.SetToolTip(solveStatusLabel, null);
             Cursor = Cursors.WaitCursor;
             try
             {
-                if (controller.GetSolverMoves())
+                var solveTask = solvingController.GetSolverMovesAsync(cancellation.Token);
+                moveQueueBindingSource.ResetBindings(false);
+                bool succeeded = await solveTask;
+                if (IsDisposed || cancellation.IsCancellationRequested || controller != solvingController)
+                    return;
+
+                moveQueueBindingSource.ResetBindings(false);
+                if (succeeded)
                 {
                     solveStatusLabel.ForeColor = Color.Green;
-                    solveStatusLabel.Text = "Solved!";
-                    moveQueueBindingSource.ResetBindings(false);
+                    solveStatusLabel.Text = controller.MoveQueue.Count == 0
+                        ? "Already solved"
+                        : $"Ready: {controller.MoveQueue.Count} moves";
                 }
                 else
                 {
                     solveStatusLabel.ForeColor = Color.Red;
                     solveStatusLabel.Text = "Solver failed";
+                    toolTip.SetToolTip(solveStatusLabel, controller.SolverError);
                 }
             }
+            catch (OperationCanceledException) { }
             finally
             {
-                Cursor = Cursors.Default;
+                if (solveCancellation == cancellation)
+                {
+                    solveCancellation = null;
+                    isSolving = false;
+                    if (!IsDisposed)
+                    {
+                        groupBox1.Enabled = true;
+                        Cursor = Cursors.Default;
+                    }
+                }
             }
         }
         #endregion

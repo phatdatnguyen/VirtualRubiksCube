@@ -11,23 +11,29 @@ namespace VirtualRubiksCube.Solver
 
         public SolverMove(char face, int quarter)
         {
+            if (face is not ('U' or 'D' or 'L' or 'R' or 'F' or 'B'))
+                throw new ArgumentException($"Unknown face '{face}'.", nameof(face));
+            if (quarter is not (1 or -1 or 2))
+                throw new ArgumentOutOfRangeException(nameof(quarter), "A move must be a clockwise, counterclockwise, or half turn.");
             Face = face;
             Quarter = quarter;
         }
 
         public static SolverMove Parse(string token)
         {
-            char f = token[0];
-            int q = 1;
-            if (token.Length == 2)
-                q = token[1] == '\'' ? -1 : 2;
-            return new SolverMove(f, q);
+            ArgumentNullException.ThrowIfNull(token);
+            if (token.Length < 1 || token.Length > 2 ||
+                token[0] is not ('U' or 'D' or 'L' or 'R' or 'F' or 'B') ||
+                (token.Length == 2 && token[1] is not ('\'' or '2')))
+                throw new FormatException($"Invalid cube move '{token}'. Expected a face U/D/L/R/F/B optionally followed by ' or 2.");
+            return new SolverMove(token[0], token.Length == 1 ? 1 : token[1] == '\'' ? -1 : 2);
         }
 
         public static List<SolverMove> ParseSequence(string sequence)
         {
+            ArgumentNullException.ThrowIfNull(sequence);
             List<SolverMove> result = new();
-            foreach (string token in sequence.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            foreach (string token in sequence.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
                 result.Add(Parse(token));
             return result;
         }
